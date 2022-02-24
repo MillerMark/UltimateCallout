@@ -5,8 +5,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:UltimateCallout"
         mc:Ignorable="d"
-        Title="FrmUltimateCallout" Height="450" Width="800" AllowsTransparency="True" Background="Transparent" WindowStyle="None"
-        Closed="Callout_Closed" MouseDown="Window_MouseDown">
+        Title="FrmUltimateCallout" Height="450" Width="800" AllowsTransparency="True" Background="Transparent" 
+        ShowInTaskbar="False" Window.WindowStyle = "None" Visibility="Collapsed" Loaded="Window_Loaded"
+        Closed="Callout_Closed" MouseDown="Window_MouseDown" Topmost="True" Activated="Window_Activated" Deactivated="Window_Deactivated">
     <Canvas x:Name="cvsCallout">
     </Canvas>
 </Window>

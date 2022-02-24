@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Metadata;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -13,6 +15,7 @@ using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Ink;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
@@ -29,7 +32,6 @@ namespace UltimateCallout
 		public FrmUltimateCallout()
 		{
 			InitializeComponent();
-
 		}
 
 		void InvalidateLayout()
@@ -116,7 +118,7 @@ namespace UltimateCallout
 		double roundedRectLeft;
 		double roundedRectTop;
 		string markDownText;
-
+		
 		public void PointTo(FrameworkElement target)
 		{
 			Point pointToScreen = target.PointToScreen(new Point(target.Width / 2, target.Height / 2));
@@ -124,12 +126,37 @@ namespace UltimateCallout
 			this.Top = pointToScreen.Y;
 
 			targetParentWindow = Window.GetWindow(target);
-			if (targetParentWindow != null)
-				targetParentWindow.Closed += ParentWindow_Closed;
+			HookTargetParentWindowEvents();
 
 			LayoutEverything();
 		}
 
+		void HookTargetParentWindowEvents()
+		{
+			if (targetParentWindow == null)
+				return;
+			targetParentWindow.Closed += ParentWindow_Closed;
+			targetParentWindow.Activated += TargetParentWindow_Activated;
+			targetParentWindow.Deactivated += TargetParentWindow_Deactivated;
+		}
+
+		private void TargetParentWindow_Deactivated(object? sender, EventArgs e)
+		{
+			CheckTopMostWindow();
+		}
+
+		private void TargetParentWindow_Activated(object? sender, EventArgs e)
+		{
+			CheckTopMostWindow();
+		}
+
+		private void UnhookTargetParentWindowEvents()
+		{
+			if (targetParentWindow == null)
+				return;
+			targetParentWindow.Closed -= ParentWindow_Closed;
+		}
+		
 		public static FrmUltimateCallout ShowCallout(string markDownText, FrameworkElement target)
 		{
 			FrmUltimateCallout frmUltimateCallout = new FrmUltimateCallout();
@@ -147,14 +174,37 @@ namespace UltimateCallout
 
 		private void Callout_Closed(object sender, EventArgs e)
 		{
-			if (targetParentWindow != null)
-				targetParentWindow.Closed -= ParentWindow_Closed;
+			UnhookTargetParentWindowEvents();
 		}
+
+
 
 		private void Window_MouseDown(object sender, MouseButtonEventArgs e)
 		{
 			if (e.ChangedButton == MouseButton.Left)
 				this.DragMove();
+		}
+
+		private void Window_Activated(object sender, EventArgs e)
+		{
+			CheckTopMostWindow();
+		}
+
+		private void Window_Deactivated(object sender, EventArgs e)
+		{
+			CheckTopMostWindow();
+		}
+
+		void CheckTopMostWindow()
+		{
+			if (targetParentWindow != null)
+				Topmost = WindowHelper.IsForegroundWindow(targetParentWindow);
+		}
+
+		private void Window_Loaded(object sender, RoutedEventArgs e)
+		{
+			WindowInteropHelper wndHelper = new WindowInteropHelper(this);
+			WindowHelper.HideFromAltTab(this);
 		}
 	}
 }

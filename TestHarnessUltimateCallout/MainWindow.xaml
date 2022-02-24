@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TestHarnessUltimateCallout"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="Test Callout Window" Height="450" Width="800">
     <Canvas>
         <Rectangle x:Name="rctTarget" Width="120" Height="40" Canvas.Left="340" Canvas.Top="200" Fill="Pink" ></Rectangle>
         <Button x:Name="btnShowCallout" Padding="8" Margin="8" Click="btnShowCallout_Click" >
