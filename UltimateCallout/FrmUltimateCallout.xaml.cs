@@ -62,23 +62,62 @@ namespace UltimateCallout
 			Close();
 		}
 
-		void CreateRectangle()
+		void CalculateBounds()
 		{
 			roundedRectHeight = 250;
 			roundedRectWidth = roundedRectHeight * CalloutOptions.GoldenRatio;
-			roundedRectTop = 92;
-			roundedRectLeft = 167;
+			roundedRectTop = Options.OuterMargin;
+			roundedRectLeft = Options.OuterMargin;
+			Width = roundedRectWidth + Options.OuterMargin * 2;
+			Height = roundedRectHeight + Options.OuterMargin * 2;
+		}
 
-			Rectangle rect = new Rectangle();
-			rect.RadiusX = 6;
-			rect.RadiusY = 6;
+		void CreateCallout()
+		{
+			System.Windows.Shapes.Path calloutPath = new System.Windows.Shapes.Path()
+			{
+				Stroke = Brushes.Black,
+				StrokeThickness	= 1,
+				Fill = Brushes.AliceBlue
+			};
+			CombinedGeometry combinedGeometry = new CombinedGeometry() { GeometryCombineMode = GeometryCombineMode.Union };
+			calloutPath.Data = combinedGeometry;
+
+			RectangleGeometry rectangleGeometry = new RectangleGeometry();
+			rectangleGeometry.RadiusX = Options.CornerRadius;
+			rectangleGeometry.RadiusY = Options.CornerRadius;
+
+			Rect rect = new Rect();
 			rect.Width = roundedRectWidth;
 			rect.Height = roundedRectHeight;
-			rect.Fill = new SolidColorBrush(Colors.AliceBlue);
-			rect.Stroke = new SolidColorBrush(Colors.Blue);
-			cvsCallout.Children.Add(rect);
-			Canvas.SetLeft(rect, roundedRectLeft);
-			Canvas.SetTop(rect, roundedRectTop);
+			rect.Location = new Point(roundedRectLeft, roundedRectTop);
+			rectangleGeometry.Rect = rect;
+
+			combinedGeometry.Geometry1 = rectangleGeometry;
+
+			StreamGeometry triangleGeometry = new StreamGeometry();
+			using (StreamGeometryContext ctx = triangleGeometry.Open())
+			{
+				ctx.BeginFigure(new Point(0, 0), true, true);
+				ctx.LineTo(new Point(roundedRectWidth / 2.0, roundedRectTop), true, true);
+				ctx.LineTo(new Point(roundedRectLeft, roundedRectHeight / 2.0), true, true);
+			}
+			triangleGeometry.Freeze();
+
+			combinedGeometry.Geometry2 = triangleGeometry;
+
+			cvsCallout.Children.Add(calloutPath);
+
+			//Rectangle oldRect = new Rectangle();
+			//rect.RadiusX = 6;
+			//rect.RadiusY = 6;
+			//oldRect.Width = roundedRectWidth;
+			//oldRect.Height = roundedRectHeight;
+			//oldRect.Fill = new SolidColorBrush(Colors.AliceBlue);
+			//oldRect.Stroke = new SolidColorBrush(Colors.Blue);
+			//cvsCallout.Children.Add(oldRect);
+			//Canvas.SetLeft(oldRect, roundedRectLeft);
+			//Canvas.SetTop(oldRect, roundedRectTop);
 		}
 
 		void LayoutText()
@@ -98,16 +137,88 @@ namespace UltimateCallout
 			cvsCallout.Children.Add(markdownViewer);
 		}
 
+		/// <summary>
+		/// Rotates one point around another
+		/// </summary>
+		/// <param name="pointToRotate">The point to rotate.</param>
+		/// <param name="centerPoint">The center point of rotation.</param>
+		/// <param name="angleInDegrees">The rotation angle in degrees.</param>
+		/// <returns>Rotated point</returns>
+		static Point RotatePoint(Point pointToRotate, Point centerPoint, double angleInDegrees)
+		{
+			double angleInRadians = angleInDegrees * (Math.PI / 180);
+			double cosTheta = Math.Cos(angleInRadians);
+			double sinTheta = Math.Sin(angleInRadians);
+			return new Point
+			{
+				X =
+					(int)
+					(cosTheta * (pointToRotate.X - centerPoint.X) -
+					sinTheta * (pointToRotate.Y - centerPoint.Y) + centerPoint.X),
+				Y =
+					(int)
+					(sinTheta * (pointToRotate.X - centerPoint.X) +
+					cosTheta * (pointToRotate.Y - centerPoint.Y) + centerPoint.Y)
+			};
+		}
+
+		double GetDistanceToIntersection(MyLine testLine, MyLine topLine)
+		{
+			Point intersection = testLine.GetSegmentIntersection(topLine);
+			if (double.IsNaN(intersection.X))
+				return double.MaxValue;
+			double deltaX = intersection.X - targetCenter.X;
+			double deltaY = intersection.Y - targetCenter.Y;
+			return Math.Sqrt(deltaX * deltaX + deltaY * deltaY);
+		}
+
+		void PositionWindow()
+		{
+			targetCenter = target.PointToScreen(new Point(target.Width / 2, target.Height / 2));
+			// TODO: Calculate the distance based on the angle and the aspect ratio or size of the rounded rect.
+
+			Options.InitialAngle = 45;
+
+			double distance = 250;
+			Point calloutStartPos = target.PointToScreen(new Point(target.Width / 2, target.Height / 2 - distance));
+			Point calloutCenterPoint = RotatePoint(calloutStartPos, targetCenter, Options.InitialAngle);
+
+			Point infiniteCalloutStartPos = target.PointToScreen(new Point(target.Width / 2, target.Height / 2 - 222222));
+			Point infiniteCalloutCenterPoint = RotatePoint(infiniteCalloutStartPos, targetCenter, Options.InitialAngle);
+
+			MyLine testLine = new MyLine(targetCenter, infiniteCalloutCenterPoint);
+
+			Left = calloutCenterPoint.X - (Options.OuterMargin + roundedRectWidth / 2);
+			Top = calloutCenterPoint.Y - (Options.OuterMargin + roundedRectHeight / 2);
+
+			double right = Left + roundedRectWidth + 2 * Options.OuterMargin;
+			double bottom = Top + roundedRectHeight + 2 * Options.OuterMargin;
+
+			MyLine leftLine = MyLine.Vertical(Left, Top, bottom);
+			MyLine rightLine = MyLine.Vertical(right, Top, bottom);
+
+			MyLine topLine = MyLine.Horizontal(Left, right, Top);
+			MyLine bottomLine = MyLine.Horizontal(Left, right, bottom);
+			
+			double topDistanceToIntersection = GetDistanceToIntersection(testLine, topLine);
+			double leftDistanceToIntersection = GetDistanceToIntersection(testLine, leftLine);
+			double rightDistanceToIntersection = GetDistanceToIntersection(testLine, rightLine);
+			double bottomDistanceToIntersection = GetDistanceToIntersection(testLine, bottomLine);
+
+		}
+
 		void LayoutEverything()
 		{
 			if (layoutValid)
 				return;
 
 			cvsCallout.Children.Clear();
-			CreateRectangle();
+			CalculateBounds();
+			CreateCallout();
 			PlaceCloseButton();
 			LayoutText();
 			AddTriangle();
+			PositionWindow();
 			layoutValid = true;
 		}
 
@@ -118,9 +229,12 @@ namespace UltimateCallout
 		double roundedRectLeft;
 		double roundedRectTop;
 		string markDownText;
-		
+		FrameworkElement target;
+		Point targetCenter;
+
 		public void PointTo(FrameworkElement target)
 		{
+			this.target = target;
 			Point pointToScreen = target.PointToScreen(new Point(target.Width / 2, target.Height / 2));
 			this.Left = pointToScreen.X;
 			this.Top = pointToScreen.Y;
@@ -163,6 +277,7 @@ namespace UltimateCallout
 			frmUltimateCallout.markDownText = markDownText;
 			frmUltimateCallout.PointTo(target);
 			frmUltimateCallout.Show();
+			
 
 			return frmUltimateCallout;
 		}
