@@ -29,7 +29,12 @@ namespace TestHarnessUltimateCallout
 		FrmUltimateCallout frmUltimateCallout;
 		private void btnShowCallout_Click(object sender, RoutedEventArgs e)
 		{
-			frmUltimateCallout = FrmUltimateCallout.ShowCallout("Hello **World**! This is the \n* first\n* second\n* third\n\nAnd another long line onrei neti sarneti arnei tnserai ontweio naweif neiarfo nteirtaf neit rnaeitso nraei tneira stnei.", rctTarget);
+			frmUltimateCallout = FrmUltimateCallout.ShowCallout("Hello **World**! This is the \n* first\n* second\n* third\n\nAnd another long line onrei neti sarneti arnei tnserai ontweio naweif neiarfo nteirtaf neit rnaeitso nraei tneira stnei.", rctTarget, sldAngle.Value);
+		}
+
+		private void sldAngle_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+		{
+			this.Title = $"Angle: {sldAngle.Value.ToString()}°";		
 		}
 	}
 }
