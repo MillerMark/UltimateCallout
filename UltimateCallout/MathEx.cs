@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Shapes;
@@ -33,6 +34,19 @@ namespace UltimateCallout
 			};
 		}
 
+		public static MyLine GetRotatedMyLine(Point centerPoint, double angleDegrees)
+		{
+			Point edgePoint = new Point(centerPoint.X, centerPoint.Y - 1000);
+			edgePoint = RotatePoint(edgePoint, centerPoint, angleDegrees);
+			return new MyLine(centerPoint, edgePoint);
+		}
+
+		public static MyLine GetRotatedMyLineSegment(Point centerPoint, Point edgePoint, double angleDegrees)
+{
+			edgePoint = RotatePoint(edgePoint, centerPoint, angleDegrees);
+			return new MyLine(centerPoint, edgePoint);
+		}
+
 		public static Line GetRotatedLine(Point centerPoint, double angle)
 		{
 			Line angleGuideline = new Line();
@@ -45,5 +59,6 @@ namespace UltimateCallout
 			angleGuideline.Y2 = point.Y;
 			return angleGuideline;
 		}
+
 	}
 }

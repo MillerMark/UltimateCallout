@@ -41,7 +41,7 @@ namespace TestHarnessUltimateCallout
 			if (frmUltimateCallout != null)
 				frmUltimateCallout.Close();
 			UpdateTitle();
-			UpdateAngleGuideline();
+			//UpdateAngleGuideline();
 			frmUltimateCallout = FrmUltimateCallout.ShowCallout("Hello **World**! This is the \n* first\n* second\n* third\n\nAnd another long line onrei neti sarneti arnei tnserai ontweio naweif neiarfo nteirtaf neit rnaeitso nraei tneira stnei.", rctTarget, sldAngle.Value, sldAspectRatio.Value);
 		}
 

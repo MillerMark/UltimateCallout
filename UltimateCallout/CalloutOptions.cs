@@ -8,9 +8,11 @@ namespace UltimateCallout
 		public static double GoldenRatio = 1.61803398875d;
 		public double AspectRatio { get; set; } = GoldenRatio;
 		public double CornerRadius { get; set; } = 6;
-		public double OuterMargin { get; set; } = 25;
+		public double OuterMargin { get; set; } = 30;
 		public double Spacing { get; set; } = 5;
 		public double InitialAngle { get; set; } = 45;
+		public double DangleInnerAngle { get; set; } = 19;
+
 		public CalloutOptions()
 		{
 

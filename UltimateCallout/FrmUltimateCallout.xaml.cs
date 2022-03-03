@@ -40,11 +40,6 @@ namespace UltimateCallout
 			layoutValid = false;
 		}
 
-		void AddTriangle()
-		{
-			// DetermineCalloutPointOffset();
-		}
-
 		void PlaceCloseButton()
 		{
 			Button closeButton = new Button();
@@ -65,7 +60,7 @@ namespace UltimateCallout
 
 		void CalculateBounds()
 		{
-			calloutHeight = 250;
+			calloutHeight = 225;
 			calloutWidth = calloutHeight * Options.AspectRatio;
 			calloutTop = Options.OuterMargin;
 			calloutLeft = Options.OuterMargin;
@@ -99,27 +94,15 @@ namespace UltimateCallout
 			StreamGeometry triangleGeometry = new StreamGeometry();
 			using (StreamGeometryContext ctx = triangleGeometry.Open())
 			{
-				// No impact yet.
-				ctx.BeginFigure(new Point(calloutWidth / 2.0, calloutHeight / 2.0), true, true);
-				ctx.LineTo(new Point(calloutWidth / 2.0, calloutTop), true, true);
-				ctx.LineTo(new Point(calloutLeft, calloutHeight / 2.0), true, true);
+				ctx.BeginFigure(trianglePoint1, true, true);
+				ctx.LineTo(trianglePoint2, true, true);
+				ctx.LineTo(trianglePoint3, true, true);
 			}
 			triangleGeometry.Freeze();
 
 			combinedGeometry.Geometry2 = triangleGeometry;
 
 			cvsCallout.Children.Add(calloutPath);
-
-			//Rectangle oldRect = new Rectangle();
-			//rect.RadiusX = 6;
-			//rect.RadiusY = 6;
-			//oldRect.Width = roundedRectWidth;
-			//oldRect.Height = roundedRectHeight;
-			//oldRect.Fill = new SolidColorBrush(Colors.AliceBlue);
-			//oldRect.Stroke = new SolidColorBrush(Colors.Blue);
-			//cvsCallout.Children.Add(oldRect);
-			//Canvas.SetLeft(oldRect, roundedRectLeft);
-			//Canvas.SetTop(oldRect, roundedRectTop);
 		}
 
 		void LayoutText()
@@ -151,10 +134,10 @@ namespace UltimateCallout
 
 		void SetCalloutSide(MyLine testLine, GuidelineIntersectionData data)
 		{
-			double topDistance = GetDistanceToIntersection(testLine, data.Top);
-			double leftDistance = GetDistanceToIntersection(testLine, data.Left);
-			double rightDistance = GetDistanceToIntersection(testLine, data.Right);
-			double bottomDistance = GetDistanceToIntersection(testLine, data.Bottom);
+			double topDistance = GetDistanceToIntersection(testLine, data.CalloutTop);
+			double leftDistance = GetDistanceToIntersection(testLine, data.CalloutLeft);
+			double rightDistance = GetDistanceToIntersection(testLine, data.CalloutRight);
+			double bottomDistance = GetDistanceToIntersection(testLine, data.CalloutBottom);
 
 			double minDistance = Min(topDistance, leftDistance, rightDistance, bottomDistance);
 
@@ -172,21 +155,25 @@ namespace UltimateCallout
 
 		GuidelineIntersectionData GetGuidelineIntersectionData(MyLine testLine, double windowLeft, double windowTop)
 		{
-			double right = windowLeft + calloutWidth + 2 * Options.OuterMargin;
-			double bottom = windowTop + calloutHeight + 2 * Options.OuterMargin;
+			double calloutLeft = windowLeft + Options.OuterMargin;
+			double calloutTop = windowTop + Options.OuterMargin;
+			double calloutRight = calloutLeft + calloutWidth;
+			double calloutBottom = calloutTop + calloutHeight;
 
-			MyLine leftLine = MyLine.Vertical(windowLeft, windowTop, bottom);
-			MyLine rightLine = MyLine.Vertical(right, windowTop, bottom);
-
-			MyLine topLine = MyLine.Horizontal(windowLeft, right, windowTop);
-			MyLine bottomLine = MyLine.Horizontal(windowLeft, right, bottom);
+			double windowRight = windowLeft + calloutWidth + 2 * Options.OuterMargin;
+			double windowBottom = windowTop + calloutHeight + 2 * Options.OuterMargin;
 
 			GuidelineIntersectionData guidelineIntersectionData = new GuidelineIntersectionData();
 
-			guidelineIntersectionData.Top = topLine;
-			guidelineIntersectionData.Left = leftLine;
-			guidelineIntersectionData.Right = rightLine;
-			guidelineIntersectionData.Bottom = bottomLine;
+			guidelineIntersectionData.CalloutTop = MyLine.Horizontal(calloutLeft, calloutRight, calloutTop);
+			guidelineIntersectionData.CalloutLeft = MyLine.Vertical(calloutLeft, calloutTop, calloutBottom);
+			guidelineIntersectionData.CalloutRight = MyLine.Vertical(calloutRight, calloutTop, calloutBottom);
+			guidelineIntersectionData.CalloutBottom = MyLine.Horizontal(calloutLeft, calloutRight, calloutBottom);
+
+			guidelineIntersectionData.WindowTop = MyLine.Horizontal(windowLeft, windowRight, windowTop);
+			guidelineIntersectionData.WindowLeft = MyLine.Vertical(windowLeft, windowTop, windowBottom);
+			guidelineIntersectionData.WindowRight = MyLine.Vertical(windowRight, windowTop, windowBottom);
+			guidelineIntersectionData.WindowBottom = MyLine.Horizontal(windowLeft, windowRight, windowBottom);
 
 			SetCalloutSide(testLine, guidelineIntersectionData);
 
@@ -225,6 +212,29 @@ namespace UltimateCallout
 			cvsCallout.Children.Add(sideIndicator);
 		}
 
+		Point ScreenToCanvasPoint(Point screenPoint, double windowLeft, double windowTop)
+		{
+			return new Point(screenPoint.X - windowLeft, screenPoint.Y - windowTop);
+		}
+
+		void GetTrianglePoints(GuidelineIntersectionData guidelineIntersectionData, double windowLeft, double windowTop)
+		{
+			MyLine guideline = MathEx.GetRotatedMyLine(targetCenter, Options.InitialAngle);
+			var triangleScreenPoint1 = guidelineIntersectionData.Side switch
+			{
+				CalloutSide.Right => guideline.GetSegmentIntersection(guidelineIntersectionData.WindowRight),
+				CalloutSide.Left => guideline.GetSegmentIntersection(guidelineIntersectionData.WindowLeft),
+				CalloutSide.Bottom => guideline.GetSegmentIntersection(guidelineIntersectionData.WindowBottom),
+				CalloutSide.Top => guideline.GetSegmentIntersection(guidelineIntersectionData.WindowTop),
+				_ => throw new Exception($"Come on!!!")
+			};
+			var triangleScreenPoint2 = MathEx.GetRotatedMyLineSegment(triangleScreenPoint1, calloutScreenCenter, Options.DangleInnerAngle).End;
+			var triangleScreenPoint3 = MathEx.GetRotatedMyLineSegment(triangleScreenPoint1, calloutScreenCenter, -Options.DangleInnerAngle).End;
+			trianglePoint1 = ScreenToCanvasPoint(triangleScreenPoint1, windowLeft, windowTop);
+			trianglePoint2 = ScreenToCanvasPoint(triangleScreenPoint2, windowLeft, windowTop);
+			trianglePoint3 = ScreenToCanvasPoint(triangleScreenPoint3, windowLeft, windowTop);
+		}
+
 		void PositionWindow()
 		{
 			targetCenter = target.PointToScreen(new Point(target.Width / 2, target.Height / 2));
@@ -232,7 +242,7 @@ namespace UltimateCallout
 
 
 			const int almostInfiniteDistance = 222222;
-			RotateCalloutToGetPosition(almostInfiniteDistance, out double windowLeft, out double windowTop);
+			RotateCalloutToGetPosition(almostInfiniteDistance, CalloutSide.None, out double windowLeft, out double windowTop);
 
 			Point infiniteCalloutStartPos = target.PointToScreen(new Point(target.Width / 2, target.Height / 2 - almostInfiniteDistance));
 			Point infiniteCalloutCenterPoint = MathEx.RotatePoint(infiniteCalloutStartPos, targetCenter, Options.InitialAngle);
@@ -242,19 +252,21 @@ namespace UltimateCallout
 			GuidelineIntersectionData guidelineIntersectionData = GetGuidelineIntersectionData(testLine, windowLeft, windowTop);
 			SetTopLeft(guidelineIntersectionData);
 
-			//Point trianglePoint = GetTrianglePoint(guidelineIntersectionData);
 			double distance = GetDistance(guidelineIntersectionData);
 
-			//! Seems to fail by about 180° when InitialAngle is between 235.6° and 303°.
-
-			RotateCalloutToGetPosition(distance, out windowLeft, out windowTop);
+			RotateCalloutToGetPosition(distance, guidelineIntersectionData.Side, out windowLeft, out windowTop);
+			calloutScreenCenter = new Point(windowLeft + Options.OuterMargin + calloutWidth / 2, windowTop + Options.OuterMargin + calloutHeight / 2);
 			Left = windowLeft;
 			Top = windowTop;
+
+			GuidelineIntersectionData correctGuidelineIntersectionData = GetGuidelineIntersectionData(testLine, windowLeft, windowTop);
+
+			GetTrianglePoints(correctGuidelineIntersectionData, windowLeft, windowTop);
 
 			ShowIntersectedSide(guidelineIntersectionData.Side);
 		}
 
-		private void RotateCalloutToGetPosition(double distance, out double windowLeft, out double windowTop)
+		private void RotateCalloutToGetPosition(double distance, CalloutSide side, out double windowLeft, out double windowTop)
 		{
 			Point calloutStartPos = target.PointToScreen(new Point(target.Width / 2, target.Height / 2 - distance));
 			Point calloutCenterPoint = MathEx.RotatePoint(calloutStartPos, targetCenter, Options.InitialAngle);
@@ -307,7 +319,7 @@ namespace UltimateCallout
 			angleDegrees = 90 - Options.InitialAngle;
 
 			double angleRadians = angleDegrees * Math.PI / 180;
-			return adjacent / Math.Cos(angleRadians);
+			return Math.Abs(adjacent / Math.Cos(angleRadians));
 		}
 
 		private double GetDistanceCalloutCenterVertical()
@@ -325,10 +337,10 @@ namespace UltimateCallout
 			return Math.Abs(opposite / Math.Sin(angleRadians));
 		}
 
-		void PlaceGuideline()
+		void PlaceGuidelineDiagnostics()
 		{
-			Point centerPoint = new Point(calloutWidth / 2 + Options.OuterMargin, calloutHeight /2 + Options.OuterMargin);
-			Line angleGuideline = MathEx.GetRotatedLine(centerPoint, Options.InitialAngle + 180);
+			Point calloutCenterPoint = new Point(calloutWidth / 2 + Options.OuterMargin, calloutHeight /2 + Options.OuterMargin);
+			Line angleGuideline = MathEx.GetRotatedLine(calloutCenterPoint, Options.InitialAngle + 180);
 			cvsCallout.Children.Add(angleGuideline);
 
 			Rectangle outerMarginRect = new Rectangle();
@@ -338,6 +350,25 @@ namespace UltimateCallout
 			cvsCallout.Children.Add(outerMarginRect);
 		}
 
+		void ShowTriangleDiagnostics()
+		{
+			System.Windows.Shapes.Path trianglePath = new System.Windows.Shapes.Path()
+			{
+				Stroke = Brushes.Black,
+				StrokeThickness = 1,
+				Fill = Brushes.Red
+			};
+			StreamGeometry triangleGeometry = new StreamGeometry();
+			trianglePath.Data = triangleGeometry;
+			using (StreamGeometryContext ctx = triangleGeometry.Open())
+			{
+				ctx.BeginFigure(trianglePoint1, true, true);
+				ctx.LineTo(trianglePoint2, true, true);
+				ctx.LineTo(trianglePoint3, true, true);
+			}
+			cvsCallout.Children.Add(trianglePath);
+		}
+
 		void LayoutEverything()
 		{
 			if (layoutValid)
@@ -345,12 +376,13 @@ namespace UltimateCallout
 
 			cvsCallout.Children.Clear();
 			CalculateBounds();
-			CreateCallout();
-			PlaceCloseButton();
-			LayoutText();
-			PlaceGuideline();
-			AddTriangle();
 			PositionWindow();
+			CreateCallout();
+			LayoutText();
+			PlaceCloseButton();
+			//PlaceGuidelineDiagnostics();
+			//ShowTriangleDiagnostics();
+			
 			layoutValid = true;
 		}
 
@@ -363,6 +395,10 @@ namespace UltimateCallout
 		string markDownText;
 		FrameworkElement target;
 		Point targetCenter;
+		Point trianglePoint1;
+		Point trianglePoint2;
+		Point trianglePoint3;
+		Point calloutScreenCenter;
 
 		public void PointTo(FrameworkElement target)
 		{

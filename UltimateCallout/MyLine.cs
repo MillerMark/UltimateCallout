@@ -1,13 +1,26 @@
 ﻿using System;
 using System.Linq;
 using System.Windows;
+using System.Diagnostics;
 
 namespace UltimateCallout
 {
+	[DebuggerDisplay("{Delta}")]
 	public class MyLine
 	{
 		public Point Start { get; set; }
 		public Point End { get; set; }
+		public string Delta {
+			get
+			{
+				Vector delta = End - Start;
+				if (delta.Y == 0)
+					return $"Horizontal at {Start.Y}, length = {delta.X}.";
+				if (delta.X == 0)
+					return $"Vertical at {Start.X}, length = {delta.Y}.";
+				return $"Delta: {delta.X}, {delta.Y}";
+			}
+		}
 
 		public MyLine(double x1, double y1, double x2, double y2)
 		{
