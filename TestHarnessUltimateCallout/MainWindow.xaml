@@ -6,8 +6,9 @@
         xmlns:local="clr-namespace:TestHarnessUltimateCallout"
         mc:Ignorable="d"
         Title="Test Callout Window" Height="450" Width="800">
-    <Canvas>
+    <Canvas x:Name="cvsMain">
         <Slider x:Name="sldAngle" Minimum="0" Maximum="360" Width="300" ValueChanged="sldAngle_ValueChanged"></Slider>
+        <Slider x:Name="sldAspectRatio" Canvas.Top="40"  Minimum="0" Maximum="5" Width="300" ValueChanged="sldAspectRatio_ValueChanged"></Slider>
         <Rectangle x:Name="rctTarget" Width="120" Height="40" Canvas.Left="340" Canvas.Top="200" Fill="Pink" ></Rectangle>
         <Button x:Name="btnShowCallout" Padding="8" Margin="8" Canvas.Top="80" Click="btnShowCallout_Click" >
             Show Callout

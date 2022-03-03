@@ -5,7 +5,8 @@ namespace UltimateCallout
 {
 	public class CalloutOptions
 	{
-		public const double GoldenRatio = 1.61803398875d;
+		public static double GoldenRatio = 1.61803398875d;
+		public double AspectRatio { get; set; } = GoldenRatio;
 		public double CornerRadius { get; set; } = 6;
 		public double OuterMargin { get; set; } = 25;
 		public double Spacing { get; set; } = 5;
