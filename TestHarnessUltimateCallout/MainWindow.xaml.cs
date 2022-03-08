@@ -30,6 +30,7 @@ namespace TestHarnessUltimateCallout
 		FrmUltimateCallout frmUltimateCallout;
 		Point centerPoint;
 		Line angleGuideline;
+		bool changingInternally;
 
 		private void btnShowCallout_Click(object sender, RoutedEventArgs e)
 		{
@@ -38,11 +39,15 @@ namespace TestHarnessUltimateCallout
 
 		private void CreateCallout()
 		{
+			if (changingInternally)
+				return;
+			if (tbxContent == null)
+				return;
 			if (frmUltimateCallout != null)
 				frmUltimateCallout.Close();
 			UpdateTitle();
 			//UpdateAngleGuideline();
-			frmUltimateCallout = FrmUltimateCallout.ShowCallout("Hello **World**! This is the \n* first\n* second\n* third\n\nAnd another long line onrei neti sarneti arnei tnserai ontweio naweif neiarfo nteirtaf neit rnaeitso nraei tneira stnei.", rctTarget, sldAngle.Value, sldAspectRatio.Value);
+			frmUltimateCallout = FrmUltimateCallout.ShowCallout(tbxContent.Text, rctTarget, sldAngle.Value, sldAspectRatio.Value, sldHeight.Value);
 		}
 
 		private void sldAngle_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -61,11 +66,34 @@ namespace TestHarnessUltimateCallout
 
 		private void UpdateTitle()
 		{
-			Title = $"Angle: {sldAngle.Value}°, Aspect Ratio: {sldAspectRatio.Value}";
+			if (sldAspectRatio != null)
+				Title = $"Angle: {sldAngle.Value}°, Aspect Ratio: {sldAspectRatio.Value}, Height: {sldHeight.Value}";
 		}
 
 		private void sldAspectRatio_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
 		{
+			CreateCallout();
+		}
+
+		private void sldHeight_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+		{
+			CreateCallout();
+		}
+
+		private void btnNextSample_Click(object sender, RoutedEventArgs e)
+		{
+			ExampleSetting next = Examples.Next();
+			changingInternally = true;
+			try
+			{
+				tbxContent.Text = next.Text;
+				sldAspectRatio.Value = next.AspectRatio;
+				sldHeight.Value = next.Height;
+			}
+			finally
+			{
+				changingInternally = false;
+			}
 			CreateCallout();
 		}
 	}

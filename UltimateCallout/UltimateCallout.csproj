@@ -7,6 +7,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Page Remove="CalloutMarkdownStyles.xaml" />
+    <Page Remove="Styles\CalloutStyles.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Styles\CalloutStyles.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Resource>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Markdig.Wpf" Version="0.5.0.1" />
   </ItemGroup>
 

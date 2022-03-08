@@ -9,5 +9,6 @@
         ShowInTaskbar="False" Window.WindowStyle = "None" Visibility="Collapsed" Loaded="Window_Loaded"
         Closed="Callout_Closed" MouseDown="Window_MouseDown" Topmost="True" Activated="Window_Activated" Deactivated="Window_Deactivated">
     <Canvas x:Name="cvsCallout">
+       
     </Canvas>
 </Window>

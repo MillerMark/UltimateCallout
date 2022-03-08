@@ -12,6 +12,7 @@ namespace UltimateCallout
 		public double Spacing { get; set; } = 5;
 		public double InitialAngle { get; set; } = 45;
 		public double DangleInnerAngle { get; set; } = 19;
+		public double Height { get; set; } = 200;
 
 		public CalloutOptions()
 		{

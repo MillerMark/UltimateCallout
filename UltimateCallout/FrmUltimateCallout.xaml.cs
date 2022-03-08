@@ -21,6 +21,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Media.TextFormatting;
 using System.Windows.Shapes;
 using System.Xaml;
+using static System.Net.WebRequestMethods;
 
 namespace UltimateCallout
 {
@@ -40,12 +41,19 @@ namespace UltimateCallout
 			layoutValid = false;
 		}
 
+		const double closeButtonEdgeSize = 16d;
+
 		void PlaceCloseButton()
 		{
 			Button closeButton = new Button();
-			closeButton.Content = "X";
-			closeButton.Width = 20;
-			closeButton.Height = 20;
+			closeButton.Background = new SolidColorBrush(Color.FromRgb(222, 245, 255));
+			closeButton.Foreground = new SolidColorBrush(Color.FromRgb(69, 133, 161));
+			closeButton.BorderBrush = new SolidColorBrush(Color.FromRgb(69, 133, 161));
+			closeButton.Content = "x";
+			closeButton.Padding = new Thickness(0, -6, 0, 0);
+			closeButton.FontSize = closeButtonEdgeSize;
+			closeButton.Width = closeButtonEdgeSize;
+			closeButton.Height = closeButtonEdgeSize;
 			closeButton.Click += CloseButton_Click;
 			cvsCallout.Children.Add(closeButton);
 			double rightEdge = calloutLeft + calloutWidth;
@@ -60,7 +68,7 @@ namespace UltimateCallout
 
 		void CalculateBounds()
 		{
-			calloutHeight = 225;
+			calloutHeight = Options.Height;
 			calloutWidth = calloutHeight * Options.AspectRatio;
 			calloutTop = Options.OuterMargin;
 			calloutLeft = Options.OuterMargin;
@@ -72,9 +80,9 @@ namespace UltimateCallout
 		{
 			System.Windows.Shapes.Path calloutPath = new System.Windows.Shapes.Path()
 			{
-				Stroke = Brushes.Black,
-				StrokeThickness	= 1,
-				Fill = Brushes.AliceBlue
+				Stroke = new SolidColorBrush(Color.FromRgb(72, 130, 156)),
+				StrokeThickness = 1,
+				Fill = new SolidColorBrush(Color.FromRgb(245, 252, 255))
 			};
 			CombinedGeometry combinedGeometry = new CombinedGeometry() { GeometryCombineMode = GeometryCombineMode.Union };
 			calloutPath.Data = combinedGeometry;
@@ -108,18 +116,59 @@ namespace UltimateCallout
 		void LayoutText()
 		{
 			MarkdownViewer markdownViewer = new MarkdownViewer();
+			LoadStyles(markdownViewer);
 			markdownViewer.Markdown = markDownText;
 			markdownViewer.Padding = new Thickness(0);
 			markdownViewer.Margin = new Thickness(0);
 			markdownViewer.IsHitTestVisible = false;
-			const double marginAdjust = 10d;
-			
-			markdownViewer.Width = calloutWidth + marginAdjust * 2;
-			markdownViewer.Height = calloutHeight + marginAdjust * 2;
+			const double leftExtension = 14d;
+			const double topExtension = 16d;
+			const double rightExtension = 2d;
+			const double bottomExtension = 10d;
 
-			Canvas.SetLeft(markdownViewer, calloutLeft + Options.CornerRadius - marginAdjust);
-			Canvas.SetTop(markdownViewer, calloutTop + Options.CornerRadius - marginAdjust);
+			markdownViewer.Loaded += MarkdownViewer_Loaded;
+
+			markdownViewer.Width = leftExtension + calloutWidth + rightExtension;
+			markdownViewer.Height = topExtension + calloutHeight + bottomExtension;
+			Canvas.SetLeft(markdownViewer, calloutLeft + Options.CornerRadius - leftExtension);
+			Canvas.SetTop(markdownViewer, calloutTop + Options.CornerRadius - topExtension);
 			cvsCallout.Children.Add(markdownViewer);
+		}
+
+		private void MarkdownViewer_Loaded(object sender, RoutedEventArgs e)
+		{
+			MarkdownViewer? markdownViewer = sender as MarkdownViewer;
+			ReserveSpaceForCloseButton(markdownViewer);
+		}
+
+		/// <summary>
+		/// Adds a figure to the layout to reserve space for the close button so words don't wrap behind it.
+		/// </summary>
+		private static void ReserveSpaceForCloseButton(MarkdownViewer? markdownViewer)
+		{
+			if (markdownViewer == null)
+				return;
+			
+			FlowDocument? flowDocument = markdownViewer.Document;
+			if (flowDocument == null)
+				return;
+			
+			Block firstBlock = flowDocument.Blocks.First();
+			if (firstBlock == null)
+				return;
+			
+			if (!(firstBlock is Paragraph paragraph))
+				return;
+			
+			Figure closeButtonFigure = new Figure();
+			closeButtonFigure.Width = new FigureLength(closeButtonEdgeSize * 0.6, FigureUnitType.Pixel);
+			closeButtonFigure.Height = new FigureLength(closeButtonEdgeSize / 3, FigureUnitType.Pixel);
+			closeButtonFigure.HorizontalAnchor = FigureHorizontalAnchor.PageRight;
+			closeButtonFigure.HorizontalOffset = 0;
+			closeButtonFigure.VerticalOffset = 0;
+			closeButtonFigure.Margin = new Thickness(0);
+			closeButtonFigure.Padding = new Thickness(0);
+			paragraph.Inlines.InsertBefore(paragraph.Inlines.FirstInline, closeButtonFigure);
 		}
 
 		double GetDistanceToIntersection(MyLine testLine, MyLine topLine)
@@ -339,7 +388,7 @@ namespace UltimateCallout
 
 		void PlaceGuidelineDiagnostics()
 		{
-			Point calloutCenterPoint = new Point(calloutWidth / 2 + Options.OuterMargin, calloutHeight /2 + Options.OuterMargin);
+			Point calloutCenterPoint = new Point(calloutWidth / 2 + Options.OuterMargin, calloutHeight / 2 + Options.OuterMargin);
 			Line angleGuideline = MathEx.GetRotatedLine(calloutCenterPoint, Options.InitialAngle + 180);
 			cvsCallout.Children.Add(angleGuideline);
 
@@ -378,12 +427,20 @@ namespace UltimateCallout
 			CalculateBounds();
 			PositionWindow();
 			CreateCallout();
-			LayoutText();
 			PlaceCloseButton();
+			LayoutText();
+
 			//PlaceGuidelineDiagnostics();
 			//ShowTriangleDiagnostics();
-			
+
 			layoutValid = true;
+		}
+
+		void LoadStyles(MarkdownViewer markdownViewer)
+		{
+			ResourceDictionary myResourceDictionary = new ResourceDictionary();
+			myResourceDictionary.Source = new Uri("pack://application:,,,/UltimateCallout;component/Styles/CalloutStyles.xaml", UriKind.Absolute);
+			markdownViewer.Resources.MergedDictionaries.Add(myResourceDictionary);
 		}
 
 		Window? targetParentWindow;
@@ -438,12 +495,13 @@ namespace UltimateCallout
 				return;
 			targetParentWindow.Closed -= ParentWindow_Closed;
 		}
-		
-		public static FrmUltimateCallout ShowCallout(string markDownText, FrameworkElement target, double angle, double aspectRatio)
+
+		public static FrmUltimateCallout ShowCallout(string markDownText, FrameworkElement target, double angle, double aspectRatio, double height)
 		{
 			FrmUltimateCallout frmUltimateCallout = new FrmUltimateCallout();
 			frmUltimateCallout.Options.InitialAngle = angle;
 			frmUltimateCallout.Options.AspectRatio = aspectRatio;
+			frmUltimateCallout.Options.Height = height;
 			frmUltimateCallout.markDownText = markDownText;
 			frmUltimateCallout.PointTo(target);
 			frmUltimateCallout.Show();
