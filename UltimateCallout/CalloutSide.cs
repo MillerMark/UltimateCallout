@@ -5,7 +5,6 @@ namespace UltimateCallout
 {
 	public enum CalloutSide
 	{
-		None,
 		Left,
 		Top,
 		Right,

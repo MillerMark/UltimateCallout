@@ -46,7 +46,7 @@ namespace TestHarnessUltimateCallout
 			if (frmUltimateCallout != null)
 				frmUltimateCallout.Close();
 			UpdateTitle();
-			//UpdateAngleGuideline();
+			UpdateAngleGuideline();
 			frmUltimateCallout = FrmUltimateCallout.ShowCallout(tbxContent.Text, rctTarget, sldAngle.Value, sldAspectRatio.Value, sldHeight.Value);
 		}
 
