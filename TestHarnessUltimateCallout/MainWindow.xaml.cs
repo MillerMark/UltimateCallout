@@ -43,11 +43,17 @@ namespace TestHarnessUltimateCallout
 				return;
 			if (tbxContent == null)
 				return;
-			if (frmUltimateCallout != null)
-				frmUltimateCallout.Close();
+			
 			UpdateTitle();
-			UpdateAngleGuideline();
-			frmUltimateCallout = FrmUltimateCallout.ShowCallout(tbxContent.Text, rctTarget, sldAngle.Value, sldAspectRatio.Value, sldHeight.Value);
+			ShowAngleGuidelineDiagnostic();
+			
+			if (frmUltimateCallout != null)
+			{
+				frmUltimateCallout.MoveCallout(tbxContent.Text, rctTarget, sldAngle.Value, sldAspectRatio.Value, sldHeight.Value);
+				//frmUltimateCallout.Close();
+			}
+			else
+				frmUltimateCallout = FrmUltimateCallout.ShowCallout(tbxContent.Text, rctTarget, sldAngle.Value, sldAspectRatio.Value, sldHeight.Value);
 		}
 
 		private void sldAngle_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -55,12 +61,13 @@ namespace TestHarnessUltimateCallout
 			CreateCallout();
 		}
 
-		private void UpdateAngleGuideline()
+		private void ShowAngleGuidelineDiagnostic()
 		{
 			if (angleGuideline != null)
 				cvsMain.Children.Remove(angleGuideline);
 
 			angleGuideline = MathEx.GetRotatedLine(centerPoint, sldAngle.Value);
+			angleGuideline.Opacity = 0.25;
 			cvsMain.Children.Add(angleGuideline);
 		}
 
