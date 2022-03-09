@@ -53,7 +53,15 @@ namespace TestHarnessUltimateCallout
 				//frmUltimateCallout.Close();
 			}
 			else
+			{
 				frmUltimateCallout = FrmUltimateCallout.ShowCallout(tbxContent.Text, rctTarget, sldAngle.Value, sldAspectRatio.Value, sldHeight.Value);
+				frmUltimateCallout.Closing += FrmUltimateCallout_Closing;
+			}
+		}
+
+		private void FrmUltimateCallout_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
+		{
+			frmUltimateCallout = null;
 		}
 
 		private void sldAngle_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)

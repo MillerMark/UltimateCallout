@@ -44,7 +44,7 @@ And a long line at the end to show word wrapping because wrapping words is somet
 
 			Add(@"This is the **StatInfo** class we created in the previous step (our **data model**).
 
-Note we're passing the **UnitOfWork** (**uow**) in to its constructor.", 1.6, 142);
+Note we're passing the **UnitOfWork** (**uow**) to its constructor.", 1.6, 142);
 			Add(@"This is the **Info** property we added.", 1.6, 83);
 			Add(@"This is the **Date** property we added.", 1.6, 83);
 			Add(@"First, we create a new **UnitOfWork**...", 2.4, 68);
