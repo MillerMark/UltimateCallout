@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Windows;
 using System.Diagnostics;
+using System.Windows.Markup;
 
 namespace UltimateCallout
 {
@@ -10,7 +11,8 @@ namespace UltimateCallout
 	{
 		public Point Start { get; set; }
 		public Point End { get; set; }
-		public string Delta {
+		public string Delta
+		{
 			get
 			{
 				Vector delta = End - Start;
@@ -22,16 +24,22 @@ namespace UltimateCallout
 			}
 		}
 
+		public Point MidPoint
+		{
+			get
+			{
+				return new Point((Start.X + End.X) / 2, (Start.Y + End.Y) / 2);
+			}
+		}
+
 		public MyLine(double x1, double y1, double x2, double y2)
 		{
 			Start = new Point(x1, y1);
 			End = new Point(x2, y2);
 		}
-
-		public MyLine(Point p1, Point p2): this(p1.X, p1.Y, p2.X, p2.Y)
+		public MyLine(Point p1, Point p2) : this(p1.X, p1.Y, p2.X, p2.Y)
 		{
 		}
-
 		public bool IntersectsWith(MyLine cd)
 		{
 			return DoLinesIntersect(this, cd);
@@ -41,73 +49,73 @@ namespace UltimateCallout
 		// Find the point of intersection between
 		// the lines p1 --> p2 and p3 --> p4.
 		void FindIntersection(MyLine cd, out bool linesIntersect, out bool segmentsIntersect, out Point intersection, out Point closestPoint1, out Point closestPoint2)
-        {
-            Point p1 = this.Start;
-            Point p2 = this.End;
-            Point p3 = cd.Start;
-            Point p4 = cd.End;
+		{
+			Point p1 = this.Start;
+			Point p2 = this.End;
+			Point p3 = cd.Start;
+			Point p4 = cd.End;
 
-            // Get the segments' parameters.
-            double dx12 = p2.X - p1.X;
-            double dy12 = p2.Y - p1.Y;
-            double dx34 = p4.X - p3.X;
-            double dy34 = p4.Y - p3.Y;
+			// Get the segments' parameters.
+			double dx12 = p2.X - p1.X;
+			double dy12 = p2.Y - p1.Y;
+			double dx34 = p4.X - p3.X;
+			double dy34 = p4.Y - p3.Y;
 
-            // Solve for t1 and t2
-            double denominator = (dy12 * dx34 - dx12 * dy34);
+			// Solve for t1 and t2
+			double denominator = (dy12 * dx34 - dx12 * dy34);
 
 			double t1 = ((p1.X - p3.X) * dy34 + (p3.Y - p1.Y) * dx34) / denominator;
-            if (double.IsInfinity(t1))
-            {
-                // The lines are parallel (or close enough to it).
-                linesIntersect = false;
-                segmentsIntersect = false;
-                intersection = new Point(double.NaN, double.NaN);
-                closestPoint1 = new Point(double.NaN, double.NaN);
-                closestPoint2 = new Point(double.NaN, double.NaN);
-                return;
-            }
-            linesIntersect = true;
+			if (double.IsInfinity(t1))
+			{
+				// The lines are parallel (or close enough to it).
+				linesIntersect = false;
+				segmentsIntersect = false;
+				intersection = new Point(double.NaN, double.NaN);
+				closestPoint1 = new Point(double.NaN, double.NaN);
+				closestPoint2 = new Point(double.NaN, double.NaN);
+				return;
+			}
+			linesIntersect = true;
 
-            double t2 =
-                ((p3.X - p1.X) * dy12 + (p1.Y - p3.Y) * dx12)
-                    / -denominator;
+			double t2 =
+				((p3.X - p1.X) * dy12 + (p1.Y - p3.Y) * dx12)
+					/ -denominator;
 
-            // Find the point of intersection.
-            intersection = new Point(p1.X + dx12 * t1, p1.Y + dy12 * t1);
+			// Find the point of intersection.
+			intersection = new Point(p1.X + dx12 * t1, p1.Y + dy12 * t1);
 
-            // The segments intersect if t1 and t2 are between 0 and 1.
-            segmentsIntersect =
-                ((t1 >= 0) && (t1 <= 1) &&
-                 (t2 >= 0) && (t2 <= 1));
+			// The segments intersect if t1 and t2 are between 0 and 1.
+			segmentsIntersect =
+				((t1 >= 0) && (t1 <= 1) &&
+				 (t2 >= 0) && (t2 <= 1));
 
-            // Find the closest points on the segments.
-            if (t1 < 0)
-            {
-                t1 = 0;
-            }
-            else if (t1 > 1)
-            {
-                t1 = 1;
-            }
+			// Find the closest points on the segments.
+			if (t1 < 0)
+			{
+				t1 = 0;
+			}
+			else if (t1 > 1)
+			{
+				t1 = 1;
+			}
 
-            if (t2 < 0)
-            {
-                t2 = 0;
-            }
-            else if (t2 > 1)
-            {
-                t2 = 1;
-            }
+			if (t2 < 0)
+			{
+				t2 = 0;
+			}
+			else if (t2 > 1)
+			{
+				t2 = 1;
+			}
 
-            closestPoint1 = new Point(p1.X + dx12 * t1, p1.Y + dy12 * t1);
-            closestPoint2 = new Point(p3.X + dx34 * t2, p3.Y + dy34 * t2);
-        }
+			closestPoint1 = new Point(p1.X + dx12 * t1, p1.Y + dy12 * t1);
+			closestPoint2 = new Point(p3.X + dx34 * t2, p3.Y + dy34 * t2);
+		}
 
 		public Point GetIntersection(MyLine cd)
 		{
-            FindIntersection(cd, out bool linesIntersect, out bool segmentsIntersect, out Point intersection, out Point closestPoint1, out Point closestPoint2);
-            if (linesIntersect)
+			FindIntersection(cd, out bool linesIntersect, out bool segmentsIntersect, out Point intersection, out Point closestPoint1, out Point closestPoint2);
+			if (linesIntersect)
 				return intersection;
 
 			return new Point(double.NaN, double.NaN);

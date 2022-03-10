@@ -8,20 +8,25 @@
         Title="Test Callout Window" Height="450" Width="800">
     <Canvas x:Name="cvsMain">
         <StackPanel Orientation="Vertical">
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Angle: " Width="80" Height="Auto" VerticalAlignment="Center"/>
+            <StackPanel Orientation="Horizontal" Margin="4" >
+                <TextBlock Text="Theme:" Width="Auto" Height="Auto" Margin="10, 0, 0, 0"/>
+                <RadioButton x:Name="rbLight" Content="Light" IsChecked="True" Margin="8, 1, 0, 0" Click="ThemeRadioButton_Click"/>
+                <RadioButton x:Name="rbDark" Content="Dark" Margin="8, 1, 0, 0" Click="ThemeRadioButton_Click"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="4">
+                <TextBlock Text="Angle: " Width="80" Height="Auto" VerticalAlignment="Center" Margin="10, 0, 0, 0"/>
                 <Slider x:Name="sldAngle" Minimum="0" Value="45" Maximum="360" Width="300" ValueChanged="sldAngle_ValueChanged" Margin="0, 10, 0, 0"></Slider>
             </StackPanel>
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Aspect Ratio: " Width="80" Height="Auto" VerticalAlignment="Center"/>
+            <StackPanel Orientation="Horizontal" Margin="4" >
+                <TextBlock Text="Aspect Ratio: " Width="80" Height="Auto" VerticalAlignment="Center" Margin="10, 0, 0, 0"/>
                 <Slider x:Name="sldAspectRatio" Value="1.6" Minimum="0" Maximum="5" Width="300" ValueChanged="sldAspectRatio_ValueChanged"></Slider>
             </StackPanel>
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Height: " Width="80" Height="Auto" VerticalAlignment="Center"/>
+            <StackPanel Orientation="Horizontal" Margin="4" >
+                <TextBlock Text="Height: " Width="80" Height="Auto" VerticalAlignment="Center" Margin="10, 0, 0, 0"/>
                 <Slider x:Name="sldHeight" Minimum="20" Maximum="1080" Value="200" Width="300" ValueChanged="sldHeight_ValueChanged"></Slider>
             </StackPanel>
             <TextBox x:Name="tbxContent" Width="300" Height="200" Margin="10, 10, 0, 0" HorizontalAlignment="Left" AcceptsReturn="True" TextWrapping="Wrap" Text="# Refactoring&#xD;&#xA;It's pretty cool.&#xD;&#xA;&#xD;&#xA;![](FileDiff.png) | ![](Refactoring.png)&#xD;&#xA;-- | --&#xD;&#xA;File Diff | Refactoring&#xD;&#xA;&#xD;&#xA;```code sample```&#xD;&#xA;&#xD;&#xA;Hello **World**! Here are some bullet points:&#xD;&#xA;&#xD;&#xA;* first&#xD;&#xA;* second&#xD;&#xA;* third&#xD;&#xA;&#xD;&#xA;And a long line at the end to show word wrapping because wrapping words is something that happens on a regular basis as you may already know because you have studied these kinds of things both in the lab and in the wild." />
-            <StackPanel Orientation="Horizontal">
+            <StackPanel Orientation="Horizontal" Margin="4" >
                 <Button x:Name="btnShowCallout" Padding="8" Margin="8" Width="120" Height="50" Click="btnShowCallout_Click" >
                     Show Callout
                 </Button>

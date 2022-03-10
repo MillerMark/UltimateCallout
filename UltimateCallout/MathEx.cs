@@ -74,7 +74,7 @@ namespace UltimateCallout
 
 		static bool IsBetween(double testValue, double min, double max)
 		{
-			return testValue > min && testValue < max;
+			return testValue >= min && testValue <= max;
 		}
 
 		public static bool IsBetween(Point testPoint, Point bounds1, Point bounds2)

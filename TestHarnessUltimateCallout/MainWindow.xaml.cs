@@ -49,12 +49,12 @@ namespace TestHarnessUltimateCallout
 			
 			if (frmUltimateCallout != null)
 			{
-				frmUltimateCallout.MoveCallout(tbxContent.Text, rctTarget, sldAngle.Value, sldAspectRatio.Value, sldHeight.Value);
+				frmUltimateCallout.MoveCallout(tbxContent.Text, sldAngle.Value, sldAspectRatio.Value, sldHeight.Value);
 				//frmUltimateCallout.Close();
 			}
 			else
 			{
-				frmUltimateCallout = FrmUltimateCallout.ShowCallout(tbxContent.Text, rctTarget, sldAngle.Value, sldAspectRatio.Value, sldHeight.Value);
+				frmUltimateCallout = FrmUltimateCallout.ShowCallout(tbxContent.Text, rctTarget, sldAngle.Value, sldAspectRatio.Value, sldHeight.Value, GetTheme());
 				frmUltimateCallout.Closing += FrmUltimateCallout_Closing;
 			}
 		}
@@ -110,6 +110,28 @@ namespace TestHarnessUltimateCallout
 				changingInternally = false;
 			}
 			CreateCallout();
+		}
+
+		private void ThemeRadioButton_Click(object sender, RoutedEventArgs e)
+		{
+			if (frmUltimateCallout == null)
+				return;
+			SetTheme();
+		}
+
+		void SetTheme()
+		{
+			if (frmUltimateCallout != null)
+				frmUltimateCallout.Theme = GetTheme();
+		}
+
+		private Theme GetTheme()
+		{
+			if (rbLight.IsChecked == true)
+				return Theme.Light;
+			else if (rbDark.IsChecked == true)
+				return Theme.Dark;
+			return Theme.Custom;
 		}
 	}
 }

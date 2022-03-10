@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Packaging;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
@@ -32,6 +33,52 @@ namespace UltimateCallout
 	/// </summary>
 	public partial class FrmUltimateCallout : Window
 	{
+		private const double indicatorMargin = 10d;
+		SolidColorBrush closeButtonBackgroundBrush = new SolidColorBrush(Color.FromRgb(222, 245, 255));
+		SolidColorBrush closeButtonForegroundBrush = new SolidColorBrush(Color.FromRgb(69, 133, 161));
+		SolidColorBrush closeButtonBorderBrush = new SolidColorBrush(Color.FromRgb(171, 205, 219));
+		SolidColorBrush calloutStrokeBrush = new SolidColorBrush(Color.FromRgb(72, 130, 156));
+		SolidColorBrush calloutFillBrush = new SolidColorBrush(Color.FromRgb(245, 252, 255));
+
+		Theme theme = Theme.Light;
+		public Theme Theme { get => theme;
+			set
+			{
+				if (theme == value)
+					return;
+				theme = value;
+				LoadColorsForTheme();
+			}
+		}
+
+		void LoadColorsForTheme()
+		{
+			// TODO: Consider adding a Theme class.
+			if (Theme == Theme.Light)
+			{
+				closeButtonBackgroundBrush = new SolidColorBrush(Color.FromRgb(222, 245, 255));
+				closeButtonForegroundBrush = new SolidColorBrush(Color.FromRgb(69, 133, 161));
+				closeButtonBorderBrush = new SolidColorBrush(Color.FromRgb(171, 205, 219));
+				calloutStrokeBrush = new SolidColorBrush(Color.FromRgb(72, 130, 156));
+				calloutFillBrush = new SolidColorBrush(Color.FromRgb(245, 252, 255));
+			}
+			else if (Theme == Theme.Dark)
+			{
+				closeButtonBackgroundBrush = new SolidColorBrush(Color.FromRgb(48, 55, 59));
+				closeButtonForegroundBrush = new SolidColorBrush(Color.FromRgb(41, 105, 133));
+				closeButtonBorderBrush = new SolidColorBrush(Color.FromRgb(49, 93, 110));
+				calloutStrokeBrush = new SolidColorBrush(Color.FromRgb(50, 94, 115));
+				calloutFillBrush = new SolidColorBrush(Color.FromRgb(36, 38, 41));
+			}
+			else
+			{
+				// TODO: Add event to load custom resource, passing in the markdownViewer in the event args.
+				return;
+			}
+			InvalidateLayout();
+			LayoutEverything();
+		}
+
 		public CalloutOptions Options { get; set; } = new CalloutOptions();
 		public FrmUltimateCallout()
 		{
@@ -48,9 +95,9 @@ namespace UltimateCallout
 		void PlaceCloseButton()
 		{
 			Button closeButton = new Button();
-			closeButton.Background = new SolidColorBrush(Color.FromRgb(222, 245, 255));
-			closeButton.Foreground = new SolidColorBrush(Color.FromRgb(69, 133, 161));
-			closeButton.BorderBrush = new SolidColorBrush(Color.FromRgb(69, 133, 161));
+			closeButton.Background = closeButtonBackgroundBrush;
+			closeButton.Foreground = closeButtonForegroundBrush;
+			closeButton.BorderBrush = closeButtonBorderBrush;
 			closeButton.Content = "x";
 			closeButton.Padding = new Thickness(0, -6, 0, 0);
 			closeButton.FontSize = closeButtonEdgeSize;
@@ -72,20 +119,49 @@ namespace UltimateCallout
 		{
 			calloutHeight = Options.Height;
 			calloutWidth = calloutHeight * Options.AspectRatio;
-			calloutTop = Options.OuterMargin;
-			calloutLeft = Options.OuterMargin;
-			Width = calloutWidth + Options.OuterMargin * 2;
-			Height = calloutHeight + Options.OuterMargin * 2;
+			calloutTop = OutsideMargin;
+			calloutLeft = OutsideMargin;
+			Width = calloutWidth + OutsideMargin * 2;
+			Height = calloutHeight + OutsideMargin * 2;
 		}
 
 		void CreateCallout()
 		{
+			AddCalloutPathToBackOfCanvas(calloutStrokeBrush, 1, calloutFillBrush);
+			if (Theme == Theme.Light)
+			{
+				AddCalloutPathToBackOfCanvas(null, 0, new SolidColorBrush(Color.FromArgb(80, 0, 0, 0)), 5, 5);
+			}
+			else if (Theme == Theme.Dark)
+			{
+				for (int i = 1; i <= 10; i += 2)
+				{
+					AddCalloutPathToBackOfCanvas(new SolidColorBrush(Color.FromArgb(47, 238, 255, 0)), i, null);
+				}
+				
+				// Add shadow...
+			}
+		}
+
+		private void AddCalloutPathToBackOfCanvas(SolidColorBrush? calloutStrokeBrush, int thickness, SolidColorBrush? calloutFillBrush, double offsetX = 0, double offsetY = 0)
+		{
 			System.Windows.Shapes.Path calloutPath = new System.Windows.Shapes.Path()
 			{
-				Stroke = new SolidColorBrush(Color.FromRgb(72, 130, 156)),
-				StrokeThickness = 1,
-				Fill = new SolidColorBrush(Color.FromRgb(245, 252, 255))
+				Stroke = calloutStrokeBrush,
+				StrokeThickness = thickness,
+				Fill = calloutFillBrush
 			};
+			CreateCalloutGeometry(calloutPath);
+			// Place the callout in the back:
+			cvsCallout.Children.Insert(0, calloutPath);
+			if (offsetX != 0)
+				Canvas.SetLeft(calloutPath, offsetX);
+			if (offsetY != 0)
+				Canvas.SetTop(calloutPath, offsetY);
+		}
+
+		private void CreateCalloutGeometry(System.Windows.Shapes.Path calloutPath)
+		{
 			CombinedGeometry combinedGeometry = new CombinedGeometry() { GeometryCombineMode = GeometryCombineMode.Union };
 			calloutPath.Data = combinedGeometry;
 
@@ -111,9 +187,6 @@ namespace UltimateCallout
 			triangleGeometry.Freeze();
 
 			combinedGeometry.Geometry2 = triangleGeometry;
-
-			// Place the callout in the back:
-			cvsCallout.Children.Insert(0, calloutPath);
 		}
 
 		void LayoutText()
@@ -163,14 +236,17 @@ namespace UltimateCallout
 			if (!(firstBlock is Paragraph paragraph))
 				return;
 
-			Figure closeButtonFigure = new Figure();
-			closeButtonFigure.Width = new FigureLength(closeButtonEdgeSize * 0.6, FigureUnitType.Pixel);
-			closeButtonFigure.Height = new FigureLength(closeButtonEdgeSize / 3, FigureUnitType.Pixel);
-			closeButtonFigure.HorizontalAnchor = FigureHorizontalAnchor.PageRight;
-			closeButtonFigure.HorizontalOffset = 0;
-			closeButtonFigure.VerticalOffset = 0;
-			closeButtonFigure.Margin = new Thickness(0);
-			closeButtonFigure.Padding = new Thickness(0);
+			Figure closeButtonFigure = new()
+			{
+				Width = new FigureLength(closeButtonEdgeSize * 0.6, FigureUnitType.Pixel),
+				Height = new FigureLength(closeButtonEdgeSize / 3, FigureUnitType.Pixel),
+				HorizontalAnchor = FigureHorizontalAnchor.PageRight,
+				HorizontalOffset = 0,
+				VerticalOffset = 0,
+				Margin = new Thickness(0),
+				Padding = new Thickness(0)
+			};
+
 			paragraph.Inlines.InsertBefore(paragraph.Inlines.FirstInline, closeButtonFigure);
 		}
 
@@ -187,10 +263,10 @@ namespace UltimateCallout
 		void SetCalloutSides(MyLine testLine, GuidelineIntersectionData data)
 		{
 			// TODO: Opportunities to refactor here, but it's tricky so be careful.
-			double topWindowDistance = GetDistanceToIntersection(testLine, data.WindowTop);
-			double leftWindowDistance = GetDistanceToIntersection(testLine, data.WindowLeft);
-			double rightWindowDistance = GetDistanceToIntersection(testLine, data.WindowRight);
-			double bottomWindowDistance = GetDistanceToIntersection(testLine, data.WindowBottom);
+			double topWindowDistance = GetDistanceToIntersection(testLine, data.InnerWindowTop);
+			double leftWindowDistance = GetDistanceToIntersection(testLine, data.InnerWindowLeft);
+			double rightWindowDistance = GetDistanceToIntersection(testLine, data.InnerWindowRight);
+			double bottomWindowDistance = GetDistanceToIntersection(testLine, data.InnerWindowBottom);
 
 			double minCalloutDistance = Min(topWindowDistance, leftWindowDistance, rightWindowDistance, bottomWindowDistance);
 
@@ -225,8 +301,8 @@ namespace UltimateCallout
 
 		GuidelineIntersectionData GetGuidelineIntersectionData(MyLine testLine, double windowLeft, double windowTop)
 		{
-			double calloutLeft = windowLeft + Options.OuterMargin;
-			double calloutTop = windowTop + Options.OuterMargin;
+			double calloutLeft = windowLeft + OutsideMargin;
+			double calloutTop = windowTop + OutsideMargin;
 			double calloutRight = calloutLeft + calloutWidth;
 			double calloutBottom = calloutTop + calloutHeight;
 
@@ -235,8 +311,8 @@ namespace UltimateCallout
 			double targetRight = targetLeft + target.Width;
 			double targetBottom = targetTop + target.Height;
 
-			double windowRight = windowLeft + calloutWidth + 2 * Options.OuterMargin;
-			double windowBottom = windowTop + calloutHeight + 2 * Options.OuterMargin;
+			double windowRight = windowLeft + calloutWidth + 2 * OutsideMargin;
+			double windowBottom = windowTop + calloutHeight + 2 * OutsideMargin;
 
 			GuidelineIntersectionData guidelineIntersectionData = new GuidelineIntersectionData();
 
@@ -250,14 +326,27 @@ namespace UltimateCallout
 			guidelineIntersectionData.TargetRight = MyLine.Vertical(targetRight - Options.TargetSpacing, targetTop, targetBottom);
 			guidelineIntersectionData.TargetBottom = MyLine.Horizontal(targetLeft, targetRight, targetBottom + Options.TargetSpacing);
 
-			guidelineIntersectionData.WindowTop = MyLine.Horizontal(windowLeft, windowRight, windowTop);
-			guidelineIntersectionData.WindowLeft = MyLine.Vertical(windowLeft, windowTop, windowBottom);
-			guidelineIntersectionData.WindowRight = MyLine.Vertical(windowRight, windowTop, windowBottom);
-			guidelineIntersectionData.WindowBottom = MyLine.Horizontal(windowLeft, windowRight, windowBottom);
+			guidelineIntersectionData.InnerWindowTop = MyLine.Horizontal(windowLeft, windowRight, windowTop + indicatorMargin);
+			guidelineIntersectionData.InnerWindowLeft = MyLine.Vertical(windowLeft + indicatorMargin, windowTop, windowBottom);
+			guidelineIntersectionData.InnerWindowRight = MyLine.Vertical(windowRight - indicatorMargin, windowTop, windowBottom);
+			guidelineIntersectionData.InnerWindowBottom = MyLine.Horizontal(windowLeft, windowRight, windowBottom - indicatorMargin);
 
 			SetCalloutSides(testLine, guidelineIntersectionData);
 
 			return guidelineIntersectionData;
+		}
+
+		object diagnosticTag = new object();
+
+		void AddDiagnostic(FrameworkElement element)
+		{
+			element.Tag = diagnosticTag;
+			cvsCallout.Children.Add(element);
+		}
+
+		bool IsDiagnostic(FrameworkElement element)
+		{
+			return (element.Tag == diagnosticTag);
 		}
 
 		void ShowIntersectedSide(CalloutSide side)
@@ -270,26 +359,26 @@ namespace UltimateCallout
 				case CalloutSide.Right:
 					sideIndicator.Width = indicatorThickness;
 					sideIndicator.Height = calloutHeight;
-					Canvas.SetTop(sideIndicator, Options.OuterMargin);
+					Canvas.SetTop(sideIndicator, OutsideMargin);
 					if (side == CalloutSide.Right)
-						Canvas.SetLeft(sideIndicator, calloutWidth + Options.OuterMargin - indicatorThickness);
+						Canvas.SetLeft(sideIndicator, calloutWidth + OutsideMargin - indicatorThickness);
 					else
-						Canvas.SetLeft(sideIndicator, Options.OuterMargin);
+						Canvas.SetLeft(sideIndicator, OutsideMargin);
 					break;
 				case CalloutSide.Top:
 				case CalloutSide.Bottom:
 					sideIndicator.Width = calloutWidth;
 					sideIndicator.Height = indicatorThickness;
-					Canvas.SetLeft(sideIndicator, Options.OuterMargin);
+					Canvas.SetLeft(sideIndicator, OutsideMargin);
 					if (side == CalloutSide.Bottom)
-						Canvas.SetTop(sideIndicator, calloutHeight + Options.OuterMargin - indicatorThickness);
+						Canvas.SetTop(sideIndicator, calloutHeight + OutsideMargin - indicatorThickness);
 					else
-						Canvas.SetTop(sideIndicator, Options.OuterMargin);
+						Canvas.SetTop(sideIndicator, OutsideMargin);
 					break;
 			}
 			sideIndicator.Fill = Brushes.Blue;
 			sideIndicator.Opacity = 0.25;
-			cvsCallout.Children.Add(sideIndicator);
+			AddDiagnostic(sideIndicator);
 		}
 
 		Point ScreenToCanvasPoint(Point screenPoint, double windowLeft, double windowTop)
@@ -302,10 +391,10 @@ namespace UltimateCallout
 			MyLine guideline = MathEx.GetRotatedMyLine(targetCenter, lastCalloutAnglePosition);
 			Point pt1 = guidelineIntersectionData.CalloutDangleSide switch
 			{
-				CalloutSide.Right => guideline.GetSegmentIntersection(guidelineIntersectionData.WindowRight),
-				CalloutSide.Left => guideline.GetSegmentIntersection(guidelineIntersectionData.WindowLeft),
-				CalloutSide.Bottom => guideline.GetSegmentIntersection(guidelineIntersectionData.WindowBottom),
-				CalloutSide.Top => guideline.GetSegmentIntersection(guidelineIntersectionData.WindowTop),
+				CalloutSide.Right => guideline.GetSegmentIntersection(guidelineIntersectionData.InnerWindowRight),
+				CalloutSide.Left => guideline.GetSegmentIntersection(guidelineIntersectionData.InnerWindowLeft),
+				CalloutSide.Bottom => guideline.GetSegmentIntersection(guidelineIntersectionData.InnerWindowBottom),
+				CalloutSide.Top => guideline.GetSegmentIntersection(guidelineIntersectionData.InnerWindowTop),
 				_ => throw new Exception($"Come on!!!")
 			};
 			Point pt2 = GetTriangleScreenPoint(guidelineIntersectionData, pt1, Options.DangleInnerAngle);
@@ -358,10 +447,10 @@ namespace UltimateCallout
 
 		Point GetClosestConnectionPoint(Point rotatedScreenPt, GuidelineIntersectionData data)
 		{
-			Point topConnector = new Point((data.CalloutTop.Start.X + data.CalloutTop.End.X) / 2, (data.CalloutTop.Start.Y + data.CalloutTop.End.Y) / 2);
-			Point leftConnector = new Point((data.CalloutLeft.Start.X + data.CalloutLeft.End.X) / 2, (data.CalloutLeft.Start.Y + data.CalloutLeft.End.Y) / 2);
-			Point bottomConnector = new Point((data.CalloutBottom.Start.X + data.CalloutBottom.End.X) / 2, (data.CalloutBottom.Start.Y + data.CalloutBottom.End.Y) / 2);
-			Point rightConnector = new Point((data.CalloutRight.Start.X + data.CalloutRight.End.X) / 2, (data.CalloutRight.Start.Y + data.CalloutRight.End.Y) / 2);
+			Point topConnector = data.CalloutTop.MidPoint;
+			Point leftConnector = data.CalloutLeft.MidPoint;
+			Point bottomConnector = data.CalloutBottom.MidPoint;
+			Point rightConnector = data.CalloutRight.MidPoint;
 
 			double topLength = (rotatedScreenPt - topConnector).Length;
 			double leftLength = (rotatedScreenPt - leftConnector).Length;
@@ -418,7 +507,7 @@ namespace UltimateCallout
 				Top = windowTop;
 			}
 
-			calloutScreenCenter = new Point(windowLeft + Options.OuterMargin + calloutWidth / 2, windowTop + Options.OuterMargin + calloutHeight / 2);
+			calloutScreenCenter = new Point(windowLeft + OutsideMargin + calloutWidth / 2, windowTop + OutsideMargin + calloutHeight / 2);
 
 			GuidelineIntersectionData correctGuidelineIntersectionData = GetGuidelineIntersectionData(testLine, windowLeft, windowTop);
 
@@ -431,8 +520,8 @@ namespace UltimateCallout
 		{
 			Point calloutStartPos = target.PointToScreen(new Point(target.Width / 2, target.Height / 2 - distance));
 			Point calloutCenterPoint = MathEx.RotatePoint(calloutStartPos, targetCenter, lastCalloutAnglePosition);
-			windowLeft = calloutCenterPoint.X - (Options.OuterMargin + calloutWidth / 2);
-			windowTop = calloutCenterPoint.Y - (Options.OuterMargin + calloutHeight / 2);
+			windowLeft = calloutCenterPoint.X - (OutsideMargin + calloutWidth / 2);
+			windowTop = calloutCenterPoint.Y - (OutsideMargin + calloutHeight / 2);
 		}
 
 		void GetCalloutPosition(GuidelineIntersectionData data, out double windowLeft, out double windowTop)
@@ -442,14 +531,19 @@ namespace UltimateCallout
 				CalloutSide.Left => GetCalloutDanglePointForHorizontalExit(),
 				CalloutSide.Right => GetCalloutDanglePointForHorizontalExit(),
 				CalloutSide.Top => GetCalloutDanglePointForVerticalExit(),
-				CalloutSide.Bottom => GetCalloutDanglePointForVerticalExit()
+				CalloutSide.Bottom => GetCalloutDanglePointForVerticalExit(),
+				_ => throw new NotImplementedException()
 			};
+
+			calloutDanglePoint = GetDanglePointAtCorrectLength(calloutDanglePoint, data);
+
 			Point screenDanglePoint = data.TargetDangleSide switch
 			{
 				CalloutSide.Left => GetScreenDanglePointForHorizontalExit(),
 				CalloutSide.Right => GetScreenDanglePointForHorizontalExit(),
 				CalloutSide.Top => GetScreenDanglePointForVerticalExit(),
-				CalloutSide.Bottom => GetScreenDanglePointForVerticalExit()
+				CalloutSide.Bottom => GetScreenDanglePointForVerticalExit(),
+				_ => throw new NotImplementedException()
 			};
 
 			windowLeft = screenDanglePoint.X - calloutDanglePoint.X;
@@ -476,6 +570,17 @@ namespace UltimateCallout
 			return -1;
 		}
 
+		Point GetCalloutDanglePointForHorizontalExit()
+		{
+			// ![](164BA7B27FE650FD419F6223A6677E33.png)
+
+			double adjacentC = calloutWidth / 2 + Options.OuterMargin;
+			double theta = GetTheta();
+			double oppositeD = Math.Abs(adjacentC * Math.Tan(theta));
+
+			return GetCalloutPoint(adjacentC, oppositeD);
+		}
+		
 		Point GetCalloutDanglePointForVerticalExit()
 		{
 			// ![](9536BE665614588B86AA0DAF4F971BBB.png)
@@ -487,18 +592,24 @@ namespace UltimateCallout
 				adjacentC = Math.Abs(oppositeD / tanTheta);
 			else
 			{
-				System.Diagnostics.Debugger.Break();
-				adjacentC = calloutWidth / 2 + Options.OuterMargin;
+				throw new Exception($"Rory was wrong??? Noooooooo!!!");
+				//System.Diagnostics.Debugger.Break();
+				//adjacentC = calloutWidth / 2 + OutsideMargin;
 			}
 
 			return GetCalloutPoint(adjacentC, oppositeD);
 		}
 
+		public double OutsideMargin
+		{
+			get => Options.OuterMargin + indicatorMargin;
+		}
+
 		private Point GetCalloutPoint(double adjacentC, double oppositeD)
 		{
 			// ![](EF98A8132B6F583B59EB48677325D6BE.png)
-			double calloutX = Options.OuterMargin + calloutWidth / 2 + GetXSign() * adjacentC;
-			double calloutY = Options.OuterMargin + calloutHeight / 2 + GetYSign() * oppositeD;
+			double calloutX = OutsideMargin + calloutWidth / 2 + GetXSign() * adjacentC;
+			double calloutY = OutsideMargin + calloutHeight / 2 + GetYSign() * oppositeD;
 			return new Point(calloutX, calloutY);
 		}
 
@@ -532,22 +643,12 @@ namespace UltimateCallout
 				adjacentA = Math.Abs(oppositeB / tanTheta);
 			else
 			{
-				System.Diagnostics.Debugger.Break();
-				adjacentA = target.Width / 2 + Options.TargetSpacing;
+				throw new Exception($"Rory was wrong??? Noooooooo!!!");
+				//System.Diagnostics.Debugger.Break();
+				//adjacentA = target.Width / 2 + Options.TargetSpacing;
 			}
 
 			return GetTargetPoint(adjacentA, oppositeB);
-		}
-
-		Point GetCalloutDanglePointForHorizontalExit()
-		{
-			// ![](164BA7B27FE650FD419F6223A6677E33.png)
-
-			double adjacentC = calloutWidth / 2 + Options.OuterMargin;
-			double theta = GetTheta();
-			double oppositeD = Math.Abs(adjacentC * Math.Tan(theta));
-
-			return GetCalloutPoint(adjacentC, oppositeD);
 		}
 
 		private double GetTheta()
@@ -565,15 +666,15 @@ namespace UltimateCallout
 
 		void PlaceGuidelineDiagnostics()
 		{
-			Point calloutCenterPoint = new Point(calloutWidth / 2 + Options.OuterMargin, calloutHeight / 2 + Options.OuterMargin);
+			Point calloutCenterPoint = new Point(calloutWidth / 2 + OutsideMargin, calloutHeight / 2 + OutsideMargin);
 			Line angleGuideline = MathEx.GetRotatedLine(calloutCenterPoint, lastCalloutAnglePosition + 180);
-			cvsCallout.Children.Add(angleGuideline);
+			AddDiagnostic(angleGuideline);
 
 			Rectangle outerMarginRect = new Rectangle();
-			outerMarginRect.Width = calloutWidth + 2 * Options.OuterMargin;
-			outerMarginRect.Height = calloutHeight + 2 * Options.OuterMargin;
+			outerMarginRect.Width = calloutWidth + 2 * OutsideMargin;
+			outerMarginRect.Height = calloutHeight + 2 * OutsideMargin;
 			outerMarginRect.Stroke = Brushes.Purple;
-			cvsCallout.Children.Add(outerMarginRect);
+			AddDiagnostic(outerMarginRect);
 		}
 
 		void ShowTriangleDiagnostics()
@@ -592,7 +693,7 @@ namespace UltimateCallout
 				ctx.LineTo(trianglePoint2, true, true);
 				ctx.LineTo(trianglePoint3, true, true);
 			}
-			cvsCallout.Children.Add(trianglePath);
+			AddDiagnostic(trianglePath);
 		}
 
 		void LayoutEverything()
@@ -600,9 +701,11 @@ namespace UltimateCallout
 			if (layoutValid)
 				return;
 
+			if (target == null)
+				return;
+
 			cvsCallout.Children.Clear();
 			CalculateBounds();
-			//lastCalloutAnglePosition = Options.InitialAngle;
 			GuidelineIntersectionData guidelineIntersectionData = GetGuidelineIntersectionData(true);
 			CreateCallout();
 			PlaceCloseButton();
@@ -613,17 +716,37 @@ namespace UltimateCallout
 			layoutValid = true;
 		}
 
+		void RemoveDiagnostics()
+		{
+			for (int i = cvsCallout.Children.Count - 1; i >= 0; i--)
+				if (cvsCallout.Children[i] is FrameworkElement frameworkElement)
+					if (frameworkElement.Tag == diagnosticTag)
+						cvsCallout.Children.RemoveAt(i);
+		}
+
 		private void ShowDiagnostics(GuidelineIntersectionData guidelineIntersectionData)
 		{
-			//ShowIntersectedSide(guidelineIntersectionData.CalloutDangleSide);
-			//PlaceGuidelineDiagnostics();
-			//ShowTriangleDiagnostics();
+			RemoveDiagnostics();
+			ShowIntersectedSide(guidelineIntersectionData.CalloutDangleSide);
+			PlaceGuidelineDiagnostics();
+			ShowTriangleDiagnostics();
 		}
 
 		void LoadStyles(MarkdownViewer markdownViewer)
 		{
 			ResourceDictionary myResourceDictionary = new ResourceDictionary();
-			myResourceDictionary.Source = new Uri("pack://application:,,,/UltimateCallout;component/Styles/CalloutStyles.xaml", UriKind.Absolute);
+			string styleName;
+			if (Theme == Theme.Light)
+				styleName = "LightCalloutStyles";
+			else if (Theme == Theme.Dark)
+				styleName = "DarkCalloutStyles";
+			else
+			{
+				// TODO: Add event to load custom resource, passing in the markdownViewer in the event args.
+				return;
+			}
+
+			myResourceDictionary.Source = new Uri($"pack://application:,,,/UltimateCallout;component/Styles/{styleName}.xaml", UriKind.Absolute);
 			markdownViewer.Resources.MergedDictionaries.Add(myResourceDictionary);
 		}
 
@@ -678,10 +801,11 @@ namespace UltimateCallout
 			targetParentWindow.Closed -= ParentWindow_Closed;
 		}
 
-		public static FrmUltimateCallout ShowCallout(string markDownText, FrameworkElement target, double angle, double aspectRatio, double height)
+		public static FrmUltimateCallout ShowCallout(string markDownText, FrameworkElement target, double angle, double aspectRatio, double height, Theme theme)
 		{
 			FrmUltimateCallout frmUltimateCallout = new FrmUltimateCallout();
 			frmUltimateCallout.Options.InitialAngle = angle;
+			frmUltimateCallout.Theme = theme;
 			frmUltimateCallout.lastCalloutAnglePosition = angle;
 			frmUltimateCallout.Options.AspectRatio = aspectRatio;
 			frmUltimateCallout.Options.Height = height;
@@ -692,7 +816,7 @@ namespace UltimateCallout
 			return frmUltimateCallout;
 		}
 
-		public void MoveCallout(string markDownText, FrameworkElement target, double angle, double aspectRatio, double height)
+		public void MoveCallout(string markDownText, double angle, double aspectRatio, double height)
 		{
 			InvalidateLayout();
 			lastCalloutAnglePosition = angle;
@@ -701,8 +825,7 @@ namespace UltimateCallout
 			Options.Height = height;
 			if (this.markDownText != markDownText)
 				this.markDownText = markDownText;
-			PointTo(target);
-			//Show();
+			LayoutEverything();
 		}
 
 		private void ParentWindow_Closed(object? sender, EventArgs e)
@@ -749,8 +872,8 @@ namespace UltimateCallout
 		{
 			if (cvsCallout == null || cvsCallout.Children.Count == 0)
 				return;
-			double calloutCenterScreenX = Left + Options.OuterMargin + calloutWidth / 2;
-			double calloutCenterScreenY = Top + Options.OuterMargin + calloutHeight / 2;
+			double calloutCenterScreenX = Left + OutsideMargin + calloutWidth / 2;
+			double calloutCenterScreenY = Top + OutsideMargin + calloutHeight / 2;
 			Point calloutCenter = new Point(calloutCenterScreenX, calloutCenterScreenY);
 			double angleDegrees = MathEx.GetAngleDegrees(targetCenter, calloutCenter) + 90;
 			while (angleDegrees < 0)
@@ -767,6 +890,12 @@ namespace UltimateCallout
 				CreateCallout();
 				ShowDiagnostics(guidelineIntersectionData);
 			}
+		}
+
+		Point GetDanglePointAtCorrectLength(Point calloutDanglePoint, GuidelineIntersectionData data)
+		{
+			// TODO: Implement this!
+			return calloutDanglePoint;
 		}
 	}
 }

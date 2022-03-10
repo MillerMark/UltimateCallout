@@ -8,11 +8,16 @@
 
   <ItemGroup>
     <Page Remove="CalloutMarkdownStyles.xaml" />
-    <Page Remove="Styles\CalloutStyles.xaml" />
+    <Page Remove="Styles\DarkCalloutStyles.xaml" />
+    <Page Remove="Styles\LightCalloutStyles.xaml" />
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Styles\CalloutStyles.xaml">
+    <Resource Include="Styles\DarkCalloutStyles.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Resource>
+    <Resource Include="Styles\LightCalloutStyles.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Resource>
   </ItemGroup>

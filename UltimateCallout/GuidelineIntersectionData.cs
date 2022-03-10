@@ -15,10 +15,10 @@ namespace UltimateCallout
 		public MyLine TargetTop { get; set; }
 		public MyLine TargetRight { get; set; }
 		public MyLine TargetBottom { get; set; }
-		public MyLine WindowLeft { get; set; }
-		public MyLine WindowTop { get; set; }
-		public MyLine WindowRight { get; set; }
-		public MyLine WindowBottom { get; set; }
+		public MyLine InnerWindowLeft { get; set; }
+		public MyLine InnerWindowTop { get; set; }
+		public MyLine InnerWindowRight { get; set; }
+		public MyLine InnerWindowBottom { get; set; }
 
 		public GuidelineIntersectionData()
 		{
