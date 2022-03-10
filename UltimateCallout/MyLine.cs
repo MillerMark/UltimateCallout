@@ -3,6 +3,7 @@ using System.Linq;
 using System.Windows;
 using System.Diagnostics;
 using System.Windows.Markup;
+using Microsoft.VisualBasic;
 
 namespace UltimateCallout
 {
@@ -32,14 +33,16 @@ namespace UltimateCallout
 			}
 		}
 
-		public MyLine(double x1, double y1, double x2, double y2)
+		public MyLine(double startX, double startY, double endX, double endY)
 		{
-			Start = new Point(x1, y1);
-			End = new Point(x2, y2);
+			Start = new Point(startX, startY);
+			End = new Point(endX, endY);
 		}
-		public MyLine(Point p1, Point p2) : this(p1.X, p1.Y, p2.X, p2.Y)
+		
+		public MyLine(Point start, Point end) : this(start.X, start.Y, end.X, end.Y)
 		{
 		}
+
 		public bool IntersectsWith(MyLine cd)
 		{
 			return DoLinesIntersect(this, cd);
@@ -165,6 +168,52 @@ namespace UltimateCallout
 		public static MyLine Vertical(double x, double top, double bottom)
 		{
 			return new MyLine(x, top, x, bottom);
+}
+
+		double GetDistanceToIntersection(Point testPoint, MyLine line1, MyLine line2, out Point intersection)
+		{
+			intersection = line1.GetIntersection(line2);
+			if (double.IsNaN(intersection.X))
+				return double.MaxValue;
+			return (intersection - testPoint).Length;
+		}
+
+		/// <summary>
+		/// Returns the intersection between testLine and the supplied lines that is closest to testPoint.
+		/// </summary>
+		public Point GetClosestIntersect(Point testPoint, MyLine testLine, params MyLine[] lines)
+		{
+			int smallestIndexSoFar = -1;
+			double smallestDistanceSoFar = double.MaxValue;
+			Point closestIntersection;
+			for (int i = 0; i < lines.Length; i++)
+			{
+				double distanceToIntersection = GetDistanceToIntersection(testPoint, testLine, lines[i], out Point intersection);
+				if (smallestIndexSoFar == -1 || distanceToIntersection < smallestDistanceSoFar)
+				{
+					smallestIndexSoFar = i;
+					smallestDistanceSoFar = distanceToIntersection;
+					closestIntersection = intersection;
+				}
+			}
+			if (smallestIndexSoFar == -1)
+				return new Point(double.NaN, double.NaN);
+
+			return closestIntersection;
+		}
+
+		Vector ToVector()
+		{
+			return new Vector(End.X - Start.X, End.Y - Start.Y);
+		}
+
+		public void Extend(double additionalLength)
+		{
+			Vector vector = ToVector();
+			double originalLength = vector.Length;
+			double factor = (originalLength + additionalLength) / originalLength;
+			vector = vector * factor;
+			End = new Point(Start.X + vector.X, Start.Y + vector.Y);
 		}
 	}
 }

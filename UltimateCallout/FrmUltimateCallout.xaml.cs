@@ -526,7 +526,7 @@ namespace UltimateCallout
 
 		void GetCalloutPosition(GuidelineIntersectionData data, out double windowLeft, out double windowTop)
 		{
-			Point calloutDanglePoint = data.CalloutDangleSide switch
+			Point danglePoint = data.CalloutDangleSide switch
 			{
 				CalloutSide.Left => GetCalloutDanglePointForHorizontalExit(),
 				CalloutSide.Right => GetCalloutDanglePointForHorizontalExit(),
@@ -535,7 +535,7 @@ namespace UltimateCallout
 				_ => throw new NotImplementedException()
 			};
 
-			calloutDanglePoint = GetDanglePointAtCorrectLength(calloutDanglePoint, data);
+			//danglePoint = GetDanglePointAtCorrectLength(danglePoint, data);
 
 			Point screenDanglePoint = data.TargetDangleSide switch
 			{
@@ -546,8 +546,8 @@ namespace UltimateCallout
 				_ => throw new NotImplementedException()
 			};
 
-			windowLeft = screenDanglePoint.X - calloutDanglePoint.X;
-			windowTop = screenDanglePoint.Y - calloutDanglePoint.Y;
+			windowLeft = screenDanglePoint.X - danglePoint.X;
+			windowTop = screenDanglePoint.Y - danglePoint.Y;
 		}
 
 		double GetXSign()
@@ -892,10 +892,23 @@ namespace UltimateCallout
 			}
 		}
 
-		Point GetDanglePointAtCorrectLength(Point calloutDanglePoint, GuidelineIntersectionData data)
+		Point GetDanglePointAtCorrectLength(Point danglePoint, GuidelineIntersectionData data)
 		{
-			// TODO: Implement this!
-			return calloutDanglePoint;
+			Point calloutCenter = new Point(OutsideMargin + calloutWidth / 2, OutsideMargin + calloutHeight / 2);
+
+			MyLine fullDangleLine = new MyLine(calloutCenter, danglePoint);
+			double left = OutsideMargin;
+			double top = OutsideMargin;
+			double right = OutsideMargin + calloutWidth;
+			double bottom = OutsideMargin + calloutHeight;
+			MyLine calloutLeft = MyLine.Vertical(left, top, bottom);
+			MyLine calloutTop = MyLine.Horizontal(left, right, top);
+			MyLine calloutRight = MyLine.Vertical(right, top, bottom);
+			MyLine calloutBottom = MyLine.Horizontal(left, right, bottom);
+			Point dangleLineIntersect = fullDangleLine.GetClosestIntersect(danglePoint, calloutLeft, calloutTop, calloutRight, calloutBottom);
+			MyLine dangleLine = new MyLine(calloutCenter, dangleLineIntersect);
+			dangleLine.Extend(Options.OuterMargin);
+			return dangleLine.End;
 		}
 	}
 }
