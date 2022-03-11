@@ -31,6 +31,7 @@ namespace TestHarnessUltimateCallout
 		Point centerPoint;
 		Line angleGuideline;
 		bool changingInternally;
+		bool showDiagnostics;
 
 		private void btnShowCallout_Click(object sender, RoutedEventArgs e)
 		{
@@ -124,6 +125,11 @@ namespace TestHarnessUltimateCallout
 			if (frmUltimateCallout != null)
 				frmUltimateCallout.Theme = GetTheme();
 		}
+		void SetDiagnostics()
+		{
+			if (frmUltimateCallout != null)
+				frmUltimateCallout.ShowDiagnostics = showDiagnostics;
+		}
 
 		private Theme GetTheme()
 		{
@@ -132,6 +138,14 @@ namespace TestHarnessUltimateCallout
 			else if (rbDark.IsChecked == true)
 				return Theme.Dark;
 			return Theme.Custom;
+		}
+
+		private void ckDiagnostics_CheckedChanged(object sender, RoutedEventArgs e)
+		{
+			showDiagnostics = ckDiagnostics.IsChecked == true;
+			if (frmUltimateCallout == null)
+				return;
+			SetDiagnostics();
 		}
 	}
 }

@@ -4,15 +4,17 @@ using System.Windows;
 using System.Diagnostics;
 using System.Windows.Markup;
 using Microsoft.VisualBasic;
+using System.Windows.Shapes;
 
 namespace UltimateCallout
 {
-	[DebuggerDisplay("{Delta}")]
+	[DebuggerDisplay("{DiagnosticDelta} (Length: {Length})")]
 	public class MyLine
 	{
 		public Point Start { get; set; }
 		public Point End { get; set; }
-		public string Delta
+
+		public string DiagnosticDelta
 		{
 			get
 			{
@@ -25,6 +27,14 @@ namespace UltimateCallout
 			}
 		}
 
+		public Vector Delta
+		{
+			get
+			{
+				return End - Start;
+			}
+		}
+
 		public Point MidPoint
 		{
 			get
@@ -32,6 +42,8 @@ namespace UltimateCallout
 				return new Point((Start.X + End.X) / 2, (Start.Y + End.Y) / 2);
 			}
 		}
+		
+		public double Length => Delta.Length;
 
 		public MyLine(double startX, double startY, double endX, double endY)
 		{
@@ -170,7 +182,7 @@ namespace UltimateCallout
 			return new MyLine(x, top, x, bottom);
 }
 
-		double GetDistanceToIntersection(Point testPoint, MyLine line1, MyLine line2, out Point intersection)
+		static double GetDistanceToIntersection(Point testPoint, MyLine line1, MyLine line2, out Point intersection)
 		{
 			intersection = line1.GetIntersection(line2);
 			if (double.IsNaN(intersection.X))
@@ -178,42 +190,40 @@ namespace UltimateCallout
 			return (intersection - testPoint).Length;
 		}
 
-		/// <summary>
-		/// Returns the intersection between testLine and the supplied lines that is closest to testPoint.
-		/// </summary>
-		public Point GetClosestIntersect(Point testPoint, MyLine testLine, params MyLine[] lines)
+		public Point GetClosestIntersectingPoint(Point testPoint, params MyLine[] lines)
 		{
-			int smallestIndexSoFar = -1;
-			double smallestDistanceSoFar = double.MaxValue;
-			Point closestIntersection;
-			for (int i = 0; i < lines.Length; i++)
+			double shortestDistance = double.MaxValue;
+			Point closestPoint = new Point(double.NaN, double.NaN);
+			
+			foreach (MyLine myLine in lines)
 			{
-				double distanceToIntersection = GetDistanceToIntersection(testPoint, testLine, lines[i], out Point intersection);
-				if (smallestIndexSoFar == -1 || distanceToIntersection < smallestDistanceSoFar)
+				Point intersection = GetSegmentIntersection(myLine);
+				if (double.IsNaN(intersection.X))
+					continue;
+
+				double distance = (intersection - testPoint).Length;
+				if (distance < shortestDistance)
 				{
-					smallestIndexSoFar = i;
-					smallestDistanceSoFar = distanceToIntersection;
-					closestIntersection = intersection;
+					shortestDistance = distance;
+					closestPoint = intersection;
 				}
 			}
-			if (smallestIndexSoFar == -1)
-				return new Point(double.NaN, double.NaN);
 
-			return closestIntersection;
+			return closestPoint;
 		}
 
-		Vector ToVector()
+		void SetEnd(Vector delta)
 		{
-			return new Vector(End.X - Start.X, End.Y - Start.Y);
+			End = new Point(Start.X + delta.X, Start.Y + delta.Y);
 		}
 
-		public void Extend(double additionalLength)
+		public void MatchLength(double desiredLength)
 		{
-			Vector vector = ToVector();
-			double originalLength = vector.Length;
-			double factor = (originalLength + additionalLength) / originalLength;
-			vector = vector * factor;
-			End = new Point(Start.X + vector.X, Start.Y + vector.Y);
+			Vector delta = Delta;
+			double existingLength = delta.Length;
+			double factor = desiredLength / existingLength;
+			delta *= factor;
+			SetEnd(delta);
 		}
 	}
 }

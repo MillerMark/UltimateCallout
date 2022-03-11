@@ -36,7 +36,7 @@ namespace UltimateCallout
 
 		public static MyLine GetRotatedMyLine(Point centerPoint, double angleDegrees)
 		{
-			Point edgePoint = new Point(centerPoint.X, centerPoint.Y - 1000);
+			Point edgePoint = new Point(centerPoint.X, centerPoint.Y - 50000);
 			edgePoint = RotatePoint(edgePoint, centerPoint, angleDegrees);
 			return new MyLine(centerPoint, edgePoint);
 		}

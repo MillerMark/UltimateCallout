@@ -13,6 +13,12 @@
                 <RadioButton x:Name="rbLight" Content="Light" IsChecked="True" Margin="8, 1, 0, 0" Click="ThemeRadioButton_Click"/>
                 <RadioButton x:Name="rbDark" Content="Dark" Margin="8, 1, 0, 0" Click="ThemeRadioButton_Click"/>
             </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="4" >
+                <CheckBox x:Name="ckDiagnostics" Checked="ckDiagnostics_CheckedChanged" Unchecked="ckDiagnostics_CheckedChanged">
+                    Diagnostics
+                </CheckBox>
+            </StackPanel>
+            
             <StackPanel Orientation="Horizontal" Margin="4">
                 <TextBlock Text="Angle: " Width="80" Height="Auto" VerticalAlignment="Center" Margin="10, 0, 0, 0"/>
                 <Slider x:Name="sldAngle" Minimum="0" Value="45" Maximum="360" Width="300" ValueChanged="sldAngle_ValueChanged" Margin="0, 10, 0, 0"></Slider>
