@@ -2,6 +2,7 @@
 using Markdig.Wpf;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.IO;
 using System.IO.Packaging;
 using System.Linq;
@@ -41,7 +42,9 @@ namespace UltimateCallout
 		SolidColorBrush calloutFillBrush = new SolidColorBrush(Color.FromRgb(245, 252, 255));
 
 		Theme theme = Theme.Light;
-		public Theme Theme { get => theme;
+		public Theme Theme
+		{
+			get => theme;
 			set
 			{
 				if (theme == value)
@@ -52,7 +55,7 @@ namespace UltimateCallout
 		}
 
 		bool showDiagnostics;
-		public bool ShowDiagnostics 
+		public bool ShowDiagnostics
 		{
 			get
 			{
@@ -63,6 +66,19 @@ namespace UltimateCallout
 				if (showDiagnostics == value)
 					return;
 				showDiagnostics = value;
+				RefreshLayout();
+			}
+		}
+
+		Color glowColor = Color.FromRgb(50, 94, 115);
+		public Color GlowColor
+		{
+			get => glowColor;
+			set
+			{
+				if (glowColor == value)
+					return;
+				glowColor = value;
 				RefreshLayout();
 			}
 		}
@@ -83,7 +99,7 @@ namespace UltimateCallout
 				closeButtonBackgroundBrush = new SolidColorBrush(Color.FromRgb(48, 55, 59));
 				closeButtonForegroundBrush = new SolidColorBrush(Color.FromRgb(41, 105, 133));
 				closeButtonBorderBrush = new SolidColorBrush(Color.FromRgb(49, 93, 110));
-				calloutStrokeBrush = new SolidColorBrush(Color.FromRgb(50, 94, 115));
+				calloutStrokeBrush = new SolidColorBrush(glowColor);
 				calloutFillBrush = new SolidColorBrush(Color.FromRgb(36, 38, 41));
 			}
 			else
@@ -136,10 +152,20 @@ namespace UltimateCallout
 			Close();
 		}
 
+		void CalculateDummyBounds()
+		{
+			calloutHeight = 200;
+			calloutWidth = Options.Width;
+			calloutTop = OutsideMargin;
+			calloutLeft = OutsideMargin;
+			Width = calloutWidth + OutsideMargin * 2;
+			Height = calloutHeight + OutsideMargin * 2;
+		}
+
 		void CalculateBounds()
 		{
-			calloutHeight = Options.Height;
-			calloutWidth = calloutHeight * Options.AspectRatio;
+			calloutHeight = calculatedHeight;
+			calloutWidth = Options.Width;
 			calloutTop = OutsideMargin;
 			calloutLeft = OutsideMargin;
 			Width = calloutWidth + OutsideMargin * 2;
@@ -153,7 +179,7 @@ namespace UltimateCallout
 				AddCalloutPathToBackOfCanvas(null, 0, new SolidColorBrush(Color.FromArgb(50, 0, 0, 0)), 5, 5);
 			else if (Theme == Theme.Dark)
 				for (int i = 1; i <= 8; i += 2)
-					AddCalloutPathToBackOfCanvas(new SolidColorBrush(Color.FromArgb(47, 0, 255, 212)), i, null);
+					AddCalloutPathToBackOfCanvas(new SolidColorBrush(Color.FromArgb(47, glowColor.R, glowColor.G, glowColor.B)), i, null);
 		}
 
 		private void AddCalloutPathToBackOfCanvas(SolidColorBrush? calloutStrokeBrush, int thickness, SolidColorBrush? calloutFillBrush, double offsetX = 0, double offsetY = 0)
@@ -202,38 +228,132 @@ namespace UltimateCallout
 			combinedGeometry.Geometry2 = triangleGeometry;
 		}
 
+		void CreateDummyMarkdownViewer()
+		{
+			UnloadMarkdownViewer(dummyMarkdownViewer);
+			CalculateDummyBounds();
+			dummyMarkdownViewer = LoadMarkdownViewer();
+			cvsCallout.Children.Add(markdownViewer);
+			dummyMarkdownViewer.Tag = STR_TempMarkdown;
+		}
+
 		void LayoutText()
 		{
-			MarkdownViewer markdownViewer = new MarkdownViewer();
+			UnloadMarkdownViewer(markdownViewer);
+			markdownViewer = LoadMarkdownViewer();
+			markdownViewer.Height = topExtension + calloutHeight + bottomExtension;
+			Canvas.SetLeft(markdownViewer, GetMarkdownLeft());
+			Canvas.SetTop(markdownViewer, GetMarkdownTop());
+			cvsCallout.Children.Add(markdownViewer);
+		}
+
+		private void UnloadMarkdownViewer(MarkdownViewer markdownViewer)
+		{
+			if (markdownViewer != null)
+				markdownViewer.Loaded -= MarkdownViewer_Loaded;
+		}
+			
+		private MarkdownViewer LoadMarkdownViewer()
+		{
+			markdownViewer = new MarkdownViewer();
 			LoadStyles(markdownViewer);
 			markdownViewer.Markdown = markDownText;
 			markdownViewer.Padding = new Thickness(0);
 			markdownViewer.Margin = new Thickness(0);
 			markdownViewer.IsHitTestVisible = false;
-			const double leftExtension = 14d;
-			const double topExtension = 16d;
-			const double rightExtension = 2d;
-			const double bottomExtension = 10d;
+			markdownViewer.Width = leftExtension + calloutWidth + rightExtension;
 
 			markdownViewer.Loaded += MarkdownViewer_Loaded;
+			return markdownViewer;
+		}
 
-			markdownViewer.Width = leftExtension + calloutWidth + rightExtension;
-			markdownViewer.Height = topExtension + calloutHeight + bottomExtension;
-			Canvas.SetLeft(markdownViewer, calloutLeft + Options.CornerRadius - leftExtension);
-			Canvas.SetTop(markdownViewer, calloutTop + Options.CornerRadius - topExtension);
-			cvsCallout.Children.Add(markdownViewer);
+		private double GetMarkdownTop()
+		{
+			return calloutTop + Options.CornerRadius - topExtension;
+		}
+
+		const double leftExtension = 14d;
+		const double topExtension = 16d;
+		const double rightExtension = 2d;
+		const double bottomExtension = 10d;
+		const string STR_TempMarkdown = "Temp";
+
+
+		private double GetMarkdownLeft()
+		{
+			return calloutLeft + Options.CornerRadius - leftExtension;
+		}
+
+		public static IEnumerable<T> FindVisualChildren<T>(DependencyObject? depObj) where T : DependencyObject
+		{
+			if (depObj == null) yield return (T)Enumerable.Empty<T>();
+			for (int i = 0; i < VisualTreeHelper.GetChildrenCount(depObj); i++)
+			{
+				DependencyObject ithChild = VisualTreeHelper.GetChild(depObj, i);
+				if (ithChild == null) continue;
+				if (ithChild is T t) yield return t;
+				foreach (T childOfChild in FindVisualChildren<T>(ithChild)) yield return childOfChild;
+			}
+		}
+
+		double GetHeight(MarkdownViewer markdownViewer)
+		{
+			if (markdownViewer == null)
+				return 0d;
+
+			double lowestBlockSoFar = 0;
+
+			if (markdownViewer.Document != null)
+				foreach (var b in markdownViewer.Document.Blocks)
+				{
+					//Rect startCharacterRect = b.ElementStart.GetCharacterRect(LogicalDirection.Forward);
+					Rect endCharacterRect = b.ElementEnd.GetCharacterRect(LogicalDirection.Forward);
+
+					if (double.IsInfinity(endCharacterRect.Width) || double.IsInfinity(endCharacterRect.Height))
+						continue;
+
+					if (endCharacterRect.Bottom > lowestBlockSoFar)
+						lowestBlockSoFar = endCharacterRect.Bottom;
+
+					AddDiagnosticForBlock(endCharacterRect, new SolidColorBrush(Color.FromArgb(124, 255, 0, 0)), -1);
+				}
+			const double bottomMargin = 5;
+			return lowestBlockSoFar + bottomMargin;
+		}
+
+		private void AddDiagnosticForBlock(Rect startCharacterRect, SolidColorBrush strokeBrush, double offset)
+		{
+			if (double.IsInfinity(startCharacterRect.Width) || double.IsInfinity(startCharacterRect.Height))
+				return;
+
+			Rectangle blockRect = new Rectangle();
+			blockRect.Width = Math.Max(10, startCharacterRect.Width);
+			blockRect.Height = startCharacterRect.Height;
+			blockRect.Stroke = strokeBrush;
+			Canvas.SetLeft(blockRect, offset + startCharacterRect.Left + Canvas.GetLeft(markdownViewer));
+			Canvas.SetTop(blockRect, offset + startCharacterRect.Top + Canvas.GetTop(markdownViewer));
+			AddDiagnostic(blockRect);
 		}
 
 		private void MarkdownViewer_Loaded(object sender, RoutedEventArgs e)
 		{
+			
 			MarkdownViewer? markdownViewer = sender as MarkdownViewer;
-			ReserveSpaceForCloseButton(markdownViewer);
+			if (markdownViewer != null)
+			{
+				ReserveSpaceForCloseButton(markdownViewer);
+				if ((string)markdownViewer.Tag == STR_TempMarkdown)
+				{
+					calculatedHeight = GetHeight(markdownViewer);
+					ResumeCalloutConstruction();
+				}
+			}
 		}
 
 		/// <summary>
 		/// Adds a figure to the layout to reserve space for the close button so words don't wrap behind it.
 		/// </summary>
-		private static void ReserveSpaceForCloseButton(MarkdownViewer? markdownViewer)
+		private static void ReserveSpaceForCloseButton(MarkdownViewer markdownViewer)
 		{
 			if (markdownViewer == null)
 				return;
@@ -560,7 +680,7 @@ namespace UltimateCallout
 
 			return GetCalloutPoint(adjacentC, oppositeD);
 		}
-		
+
 		Point GetCalloutDanglePointForVerticalExit()
 		{
 			// ![](9536BE665614588B86AA0DAF4F971BBB.png)
@@ -701,15 +821,20 @@ namespace UltimateCallout
 				return;
 
 			cvsCallout.Children.Clear();
+			CreateDummyMarkdownViewer();
+
+			layoutValid = true;
+		}
+
+		private void ResumeCalloutConstruction()
+		{
+			cvsCallout.Children.Clear();
 			CalculateBounds();
 			GuidelineIntersectionData guidelineIntersectionData = GetGuidelineIntersectionData(true);
 			CreateCallout();
 			PlaceCloseButton();
 			LayoutText();
-
 			ShowDiagnosticControls(guidelineIntersectionData);
-
-			layoutValid = true;
 		}
 
 		void RemoveDiagnostics()
@@ -764,21 +889,41 @@ namespace UltimateCallout
 		Point calloutCenter;
 		double lastCalloutAnglePosition;
 		Point closestIntersectingPoint;
+		MarkdownViewer markdownViewer;
+		MarkdownViewer dummyMarkdownViewer;
+		double calculatedHeight;
+		double targetParentLeft;
+		double targetParentTop;
 
 		public void PointTo(FrameworkElement target)
 		{
 			this.target = target;
-			
+
 			targetParentWindow = Window.GetWindow(target);
+			targetParentLeft = targetParentWindow.Left;
+			targetParentTop = targetParentWindow.Top;
 			HookTargetParentWindowEvents();
 
 			LayoutEverything();
+		}
+
+		private void TargetParentWindow_LocationChanged(object? sender, EventArgs e)
+		{
+			if (targetParentWindow == null)
+				return;
+			double deltaLeft = targetParentWindow.Left - targetParentLeft;
+			double deltaTop = targetParentWindow.Top - targetParentTop;
+			Left += deltaLeft;
+			Top += deltaTop;
+			targetParentLeft = targetParentWindow.Left;
+			targetParentTop = targetParentWindow.Top;
 		}
 
 		void HookTargetParentWindowEvents()
 		{
 			if (targetParentWindow == null)
 				return;
+			targetParentWindow.LocationChanged += TargetParentWindow_LocationChanged;
 			targetParentWindow.Closed += ParentWindow_Closed;
 			targetParentWindow.Activated += TargetParentWindow_Activated;
 			targetParentWindow.Deactivated += TargetParentWindow_Deactivated;
@@ -799,16 +944,18 @@ namespace UltimateCallout
 			if (targetParentWindow == null)
 				return;
 			targetParentWindow.Closed -= ParentWindow_Closed;
+			targetParentWindow.LocationChanged -= TargetParentWindow_LocationChanged;
+			targetParentWindow.Activated -= TargetParentWindow_Activated;
+			targetParentWindow.Deactivated -= TargetParentWindow_Deactivated;
 		}
 
-		public static FrmUltimateCallout ShowCallout(string markDownText, FrameworkElement target, double angle, double aspectRatio, double height, Theme theme)
+		public static FrmUltimateCallout ShowCallout(string markDownText, FrameworkElement target, double angle, double width, Theme theme)
 		{
 			FrmUltimateCallout frmUltimateCallout = new FrmUltimateCallout();
 			frmUltimateCallout.Options.InitialAngle = angle;
 			frmUltimateCallout.Theme = theme;
 			frmUltimateCallout.lastCalloutAnglePosition = angle;
-			frmUltimateCallout.Options.AspectRatio = aspectRatio;
-			frmUltimateCallout.Options.Height = height;
+			frmUltimateCallout.Options.Width = width;
 			frmUltimateCallout.markDownText = markDownText;
 			frmUltimateCallout.PointTo(target);
 			frmUltimateCallout.Show();
@@ -816,13 +963,12 @@ namespace UltimateCallout
 			return frmUltimateCallout;
 		}
 
-		public void MoveCallout(string markDownText, double angle, double aspectRatio, double height)
+		public void MoveCallout(string markDownText, double angle, double width)
 		{
 			InvalidateLayout();
 			lastCalloutAnglePosition = angle;
 			Options.InitialAngle = angle;
-			Options.AspectRatio = aspectRatio;
-			Options.Height = height;
+			Options.Width = width;
 			if (this.markDownText != markDownText)
 				this.markDownText = markDownText;
 			LayoutEverything();
@@ -981,8 +1127,8 @@ namespace UltimateCallout
 			pt1.Offset(Left, Top);
 
 
-			Point pt2 = GetTriangleScreenPoint(data, pt1, Options.DangleInnerAngle);
-			Point pt3 = GetTriangleScreenPoint(data, pt1, -Options.DangleInnerAngle);
+			Point pt2 = GetTriangleScreenPoint(data, pt1, Options.DangleAngle / 2);
+			Point pt3 = GetTriangleScreenPoint(data, pt1, -Options.DangleAngle / 2);
 
 			adjustedCenter.Offset(-deltaLeft, -deltaTop);
 

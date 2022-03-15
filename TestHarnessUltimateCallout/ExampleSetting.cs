@@ -6,13 +6,11 @@ namespace TestHarnessUltimateCallout
 	public class ExampleSetting
 	{
 		public string Text { get; set; }
-		public double AspectRatio { get; set; }
-		public double Height { get; set; }
-		public ExampleSetting(string text, double aspectRatio, double height)
+		public double Width { get; set; }
+		public ExampleSetting(string text, double width)
 		{
 			Text = text;
-			AspectRatio = aspectRatio;
-			Height = height;
+			Width = width;
 		}
 	}
 }

@@ -13,6 +13,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Windows.Threading;
+using System.Globalization;
 
 namespace TestHarnessUltimateCallout
 {
@@ -21,8 +23,10 @@ namespace TestHarnessUltimateCallout
 	/// </summary>
 	public partial class MainWindow : Window
 	{
+		DispatcherTimer textChangedTimer;
 		public MainWindow()
 		{
+			textChangedTimer = new DispatcherTimer(TimeSpan.FromSeconds(2), DispatcherPriority.Normal, textChanged, Dispatcher);
 			InitializeComponent();
 			centerPoint = new Point(Canvas.GetLeft(rctTarget) + rctTarget.Width / 2, Canvas.GetTop(rctTarget) + rctTarget.Height / 2);
 		}
@@ -32,6 +36,7 @@ namespace TestHarnessUltimateCallout
 		Line angleGuideline;
 		bool changingInternally;
 		bool showDiagnostics;
+		Color glowColor;
 
 		private void btnShowCallout_Click(object sender, RoutedEventArgs e)
 		{
@@ -50,12 +55,12 @@ namespace TestHarnessUltimateCallout
 			
 			if (frmUltimateCallout != null)
 			{
-				frmUltimateCallout.MoveCallout(tbxContent.Text, sldAngle.Value, sldAspectRatio.Value, sldHeight.Value);
+				frmUltimateCallout.MoveCallout(tbxContent.Text, sldAngle.Value, sldWidth.Value);
 				//frmUltimateCallout.Close();
 			}
 			else
 			{
-				frmUltimateCallout = FrmUltimateCallout.ShowCallout(tbxContent.Text, rctTarget, sldAngle.Value, sldAspectRatio.Value, sldHeight.Value, GetTheme());
+				frmUltimateCallout = FrmUltimateCallout.ShowCallout(tbxContent.Text, rctTarget, sldAngle.Value, sldWidth.Value, GetTheme());
 				frmUltimateCallout.Closing += FrmUltimateCallout_Closing;
 			}
 		}
@@ -75,23 +80,21 @@ namespace TestHarnessUltimateCallout
 			if (angleGuideline != null)
 				cvsMain.Children.Remove(angleGuideline);
 
-			angleGuideline = MathEx.GetRotatedLine(centerPoint, sldAngle.Value);
-			angleGuideline.Opacity = 0.25;
-			cvsMain.Children.Add(angleGuideline);
+			if (showDiagnostics)
+			{
+				angleGuideline = MathEx.GetRotatedLine(centerPoint, sldAngle.Value);
+				angleGuideline.Opacity = 0.25;
+				cvsMain.Children.Add(angleGuideline);
+			}
 		}
 
 		private void UpdateTitle()
 		{
-			if (sldAspectRatio != null)
-				Title = $"Angle: {sldAngle.Value}°, Aspect Ratio: {sldAspectRatio.Value}, Height: {sldHeight.Value}";
+			if (sldWidth != null)
+				Title = $"Angle: {sldAngle.Value}°, Width: {sldWidth.Value}";
 		}
 
-		private void sldAspectRatio_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-		{
-			CreateCallout();
-		}
-
-		private void sldHeight_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+		private void sldWidth_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
 		{
 			CreateCallout();
 		}
@@ -103,8 +106,7 @@ namespace TestHarnessUltimateCallout
 			try
 			{
 				tbxContent.Text = next.Text;
-				sldAspectRatio.Value = next.AspectRatio;
-				sldHeight.Value = next.Height;
+				sldWidth.Value = next.Width;
 			}
 			finally
 			{
@@ -120,10 +122,54 @@ namespace TestHarnessUltimateCallout
 			SetTheme();
 		}
 
+		void SetLightTheme()
+		{
+			SetForeground(Brushes.Black);
+			SetBackground(Brushes.White);
+		}
+
+		private void SetBackground(Brush backgroundColor)
+		{
+			Background = backgroundColor;
+			tbxContent.Background = backgroundColor;
+		}
+
+		void SetDarkTheme()
+		{
+			SetForeground(Brushes.White);
+			SetBackground(Brushes.Black);
+		}
+
+		private void SetForeground(Brush foregroundColor)
+		{
+			Foreground = foregroundColor;
+			tbxContent.Foreground = foregroundColor;
+			ckDiagnostics.Foreground = foregroundColor;
+			rbDark.Foreground = foregroundColor;
+			rbLight.Foreground = foregroundColor;
+			rbCyan.Foreground = foregroundColor;
+			rbYellow.Foreground = foregroundColor;
+			rbMagenta.Foreground = foregroundColor;
+		}
+
 		void SetTheme()
 		{
+			Theme theme = GetTheme();
+			
+			switch (theme)
+			{
+				case Theme.Light:
+					SetLightTheme();
+					glowColors.Visibility = Visibility.Collapsed;
+					break;
+				case Theme.Dark:
+					SetDarkTheme();
+					glowColors.Visibility = Visibility.Visible;
+					break;
+			}
+
 			if (frmUltimateCallout != null)
-				frmUltimateCallout.Theme = GetTheme();
+				frmUltimateCallout.Theme = theme;
 		}
 		void SetDiagnostics()
 		{
@@ -146,6 +192,35 @@ namespace TestHarnessUltimateCallout
 			if (frmUltimateCallout == null)
 				return;
 			SetDiagnostics();
+			ShowAngleGuidelineDiagnostic();
 		}
+
+		private void tbxContent_TextChanged(object sender, TextChangedEventArgs e)
+		{
+			if (changingInternally)
+				return;
+			textChangedTimer.Stop();
+			textChangedTimer.Start();
+		}
+
+		void textChanged(object sender, EventArgs e)
+		{
+			textChangedTimer.Stop();
+			CreateCallout();
+		}
+
+		private void GlowColorChanged(object sender, RoutedEventArgs e)
+		{
+			if (sender is RadioButton radioButton)
+			{
+				string colorCode = (string)radioButton.Tag;
+				glowColor = (Color)ColorConverter.ConvertFromString(colorCode);
+				if (frmUltimateCallout != null)
+					frmUltimateCallout.GlowColor = glowColor;
+
+			}
+		}
+
+
 	}
 }
