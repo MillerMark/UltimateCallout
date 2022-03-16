@@ -24,6 +24,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Media.TextFormatting;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 using System.Xaml;
 using static System.Net.WebRequestMethods;
 
@@ -34,6 +35,8 @@ namespace UltimateCallout
 	/// </summary>
 	public partial class FrmUltimateCallout : Window
 	{
+		DispatcherTimer waitingForMouseUpTimer;
+		DispatcherTimer? calloutAnimationTimer;
 		private const double indicatorMargin = 10d;
 		SolidColorBrush closeButtonBackgroundBrush = new SolidColorBrush(Color.FromRgb(222, 245, 255));
 		SolidColorBrush closeButtonForegroundBrush = new SolidColorBrush(Color.FromRgb(69, 133, 161));
@@ -230,17 +233,16 @@ namespace UltimateCallout
 
 		void CreateDummyMarkdownViewer()
 		{
-			UnloadMarkdownViewer(dummyMarkdownViewer);
+			UnloadMarkdownViewer(markdownViewer);
 			CalculateDummyBounds();
-			dummyMarkdownViewer = LoadMarkdownViewer();
+			markdownViewer = LoadMarkdownViewer();
 			cvsCallout.Children.Add(markdownViewer);
-			dummyMarkdownViewer.Tag = STR_TempMarkdown;
+			markdownViewer.Tag = STR_TempMarkdown;
 		}
 
 		void LayoutText()
 		{
 			UnloadMarkdownViewer(markdownViewer);
-			markdownViewer = LoadMarkdownViewer();
 			markdownViewer.Height = topExtension + calloutHeight + bottomExtension;
 			Canvas.SetLeft(markdownViewer, GetMarkdownLeft());
 			Canvas.SetTop(markdownViewer, GetMarkdownTop());
@@ -604,29 +606,23 @@ namespace UltimateCallout
 
 		GuidelineIntersectionData GetGuidelineIntersectionData(bool positionWindow = false)
 		{
-			targetCenter = target.PointToScreen(new Point(target.Width / 2, target.Height / 2));
-			// TODO: Calculate the distance based on the angle and the aspect ratio or size of the rounded rect.
-
-
-			const int almostInfiniteDistance = 222222;
-			RotateCalloutToGetPosition(almostInfiniteDistance, out windowLeft, out windowTop);
-
-			Point infiniteCalloutStartPos = target.PointToScreen(new Point(target.Width / 2, target.Height / 2 - almostInfiniteDistance));
-			Point infiniteCalloutCenterPoint = MathEx.RotatePoint(infiniteCalloutStartPos, targetCenter, lastCalloutAnglePosition);
-
-			MyLine testLine = new MyLine(targetCenter, infiniteCalloutCenterPoint);
-
-			GuidelineIntersectionData guidelineIntersectionData = GetGuidelineIntersectionData(testLine, windowLeft, windowTop);
-			//double distance = GetDistance(guidelineIntersectionData);
-
-			//RotateCalloutToGetPosition(distance, guidelineIntersectionData.CalloutDangleSide, out windowLeft, out windowTop);
-			calloutCenter = new Point(OutsideMargin + calloutWidth / 2, OutsideMargin + calloutHeight / 2);
-			GetCalloutPosition(guidelineIntersectionData, out windowLeft, out windowTop);
+			CalculateWindowPosition(out MyLine testLine, out GuidelineIntersectionData guidelineIntersectionData);
 
 			if (positionWindow)
 			{
-				Left = windowLeft;
-				Top = windowTop;
+				if (Options.AnimateAppearance)
+				{
+					Vector vector = screenDanglePoint - targetCenter;
+					Point halfwayPoint = new Point(windowLeft, windowTop) + vector * 0.5;
+					AnimateFrom(halfwayPoint.X, halfwayPoint.Y);
+					Left = halfwayPoint.X;
+					Top = halfwayPoint.Y;
+				}
+				else
+				{
+					Left = windowLeft;
+					Top = windowTop;
+				}
 			}
 			else
 			{
@@ -640,6 +636,27 @@ namespace UltimateCallout
 			GetTrianglePoints(correctGuidelineIntersectionData, guidelineIntersectionData.CalloutDangleSide, windowLeft, windowTop);
 
 			return guidelineIntersectionData;
+		}
+
+		private void CalculateWindowPosition(out MyLine testLine, out GuidelineIntersectionData guidelineIntersectionData)
+		{
+			targetCenter = target.PointToScreen(new Point(target.Width / 2, target.Height / 2));
+			// TODO: Calculate the distance based on the angle and the aspect ratio or size of the rounded rect.
+
+
+			const int almostInfiniteDistance = 222222;
+			RotateCalloutToGetPosition(almostInfiniteDistance, out windowLeft, out windowTop);
+
+			Point infiniteCalloutStartPos = target.PointToScreen(new Point(target.Width / 2, target.Height / 2 - almostInfiniteDistance));
+			Point infiniteCalloutCenterPoint = MathEx.RotatePoint(infiniteCalloutStartPos, targetCenter, lastCalloutAnglePosition);
+
+			testLine = new MyLine(targetCenter, infiniteCalloutCenterPoint);
+			guidelineIntersectionData = GetGuidelineIntersectionData(testLine, windowLeft, windowTop);
+			//double distance = GetDistance(guidelineIntersectionData);
+
+			//RotateCalloutToGetPosition(distance, guidelineIntersectionData.CalloutDangleSide, out windowLeft, out windowTop);
+			calloutCenter = new Point(OutsideMargin + calloutWidth / 2, OutsideMargin + calloutHeight / 2);
+			GetCalloutPosition(guidelineIntersectionData, out windowLeft, out windowTop);
 		}
 
 		private void RotateCalloutToGetPosition(double distance, out double windowLeft, out double windowTop)
@@ -890,10 +907,16 @@ namespace UltimateCallout
 		double lastCalloutAnglePosition;
 		Point closestIntersectingPoint;
 		MarkdownViewer markdownViewer;
-		MarkdownViewer dummyMarkdownViewer;
 		double calculatedHeight;
 		double targetParentLeft;
 		double targetParentTop;
+		double originalLeft;
+		double originalTop;
+		double deltaLeft;
+		double deltaTop;
+		bool animating;
+		DateTime animationStartTime;
+		Point screenDanglePoint;
 
 		public void PointTo(FrameworkElement target)
 		{
@@ -1014,30 +1037,6 @@ namespace UltimateCallout
 			WindowHelper.HideFromAltTab(this);
 		}
 
-		private void Window_LocationChanged(object sender, EventArgs e)
-		{
-			if (cvsCallout == null || cvsCallout.Children.Count == 0)
-				return;
-			double calloutCenterScreenX = Left + OutsideMargin + calloutWidth / 2;
-			double calloutCenterScreenY = Top + OutsideMargin + calloutHeight / 2;
-			Point calloutCenter = new Point(calloutCenterScreenX, calloutCenterScreenY);
-			double angleDegrees = MathEx.GetAngleDegrees(targetCenter, calloutCenter) + 90;
-			while (angleDegrees < 0)
-				angleDegrees += 360;
-			angleDegrees %= 360;
-			if (angleDegrees != lastCalloutAnglePosition)
-			{
-				for (int i = cvsCallout.Children.Count - 1; i >= 0; i--)
-					if (cvsCallout.Children[i] is System.Windows.Shapes.Path)
-						cvsCallout.Children.RemoveAt(i);
-
-				lastCalloutAnglePosition = angleDegrees;
-				GuidelineIntersectionData guidelineIntersectionData = GetGuidelineIntersectionData();
-				CreateCallout();
-				ShowDiagnosticControls(guidelineIntersectionData);
-			}
-		}
-
 		Point GetProperLocation(Point danglePoint, GuidelineIntersectionData data)
 		{
 			MyLine danglePointGuideline = new MyLine(calloutCenter, danglePoint);
@@ -1079,8 +1078,7 @@ namespace UltimateCallout
 			};
 
 			danglePoint = GetProperLocation(danglePoint, data);
-
-			Point screenDanglePoint = data.TargetDangleSide switch
+			screenDanglePoint = data.TargetDangleSide switch
 			{
 				CalloutSide.Left => GetScreenDanglePointForHorizontalExit(),
 				CalloutSide.Right => GetScreenDanglePointForHorizontalExit(),
@@ -1135,6 +1133,126 @@ namespace UltimateCallout
 			trianglePoint1 = ScreenToCanvasPoint(pt1, windowLeft, windowTop);
 			trianglePoint2 = ScreenToCanvasPoint(pt2, windowLeft, windowTop);
 			trianglePoint3 = ScreenToCanvasPoint(pt3, windowLeft, windowTop);
+		}
+
+		void MouseUpCheck(object? sender, EventArgs? e)
+		{
+			if (GetMouseIsDown())
+				return;
+
+			waitingForMouseUpTimer.Stop();
+			StartAnimatingTowardTarget();
+		}
+
+		void WaitForMouseUp()
+		{
+			if (waitingForMouseUpTimer == null)
+				waitingForMouseUpTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(200), DispatcherPriority.Input, MouseUpCheck, Dispatcher);
+
+			waitingForMouseUpTimer.Start();
+		}
+
+		private void Window_LocationChanged(object sender, EventArgs e)
+		{
+			if (cvsCallout == null || cvsCallout.Children.Count == 0)
+				return;
+
+			double calloutCenterScreenX = Left + OutsideMargin + calloutWidth / 2;
+			double calloutCenterScreenY = Top + OutsideMargin + calloutHeight / 2;
+			Point calloutCenter = new Point(calloutCenterScreenX, calloutCenterScreenY);
+			double angleDegrees = MathEx.GetAngleDegrees(targetCenter, calloutCenter) + 90;
+			while (angleDegrees < 0)
+				angleDegrees += 360;
+			angleDegrees %= 360;
+			if (angleDegrees != lastCalloutAnglePosition)
+			{
+				for (int i = cvsCallout.Children.Count - 1; i >= 0; i--)
+					if (cvsCallout.Children[i] is System.Windows.Shapes.Path)
+						cvsCallout.Children.RemoveAt(i);
+
+				lastCalloutAnglePosition = angleDegrees;
+				GuidelineIntersectionData guidelineIntersectionData = GetGuidelineIntersectionData();
+				CreateCallout();
+				ShowDiagnosticControls(guidelineIntersectionData);
+			}
+
+			if (GetMouseIsDown())
+			{
+				if (animating)
+					StopAnimationTimer();
+
+				if (Options.AnimateBackAfterDrag)
+					WaitForMouseUp();
+			}
+		}
+
+		private static bool GetMouseIsDown()
+		{
+			return System.Windows.Input.Mouse.LeftButton == MouseButtonState.Pressed;
+		}
+
+		void StopAnimationTimer()
+		{
+			if (!animating)
+				return;
+
+			animating = false;
+			calloutAnimationTimer?.Stop();
+		}
+
+		void MoveWindowToFinalPosition()
+		{
+			Left = originalLeft + deltaLeft;
+			Top = originalTop + deltaTop;
+		}
+
+		void MoveTheCallout(object? sender, EventArgs? e)
+		{
+			double timeSpanSinceAnimationStartMs = (DateTime.Now - animationStartTime).TotalMilliseconds;
+
+			bool reachedEndOfAnimation = timeSpanSinceAnimationStartMs > Options.AnimationTimeMs;
+
+			if (reachedEndOfAnimation)
+			{
+				MoveWindowToFinalPosition();
+				StopAnimationTimer();
+				return;
+			}
+
+			double percentComplete = InOutQuadBlend(timeSpanSinceAnimationStartMs / Options.AnimationTimeMs);
+			
+			Left = originalLeft + deltaLeft * percentComplete;
+			Top = originalTop + deltaTop * percentComplete;
+		}
+
+		double InOutQuadBlend(double t)
+		{
+			if (t <= 0.5f)
+				return 2.0f * t * t;
+			t -= 0.5f;
+			return 2.0f * t * (1.0f - t) + 0.5f;
+		}
+
+		void StartAnimatingTowardTarget()
+		{
+			CalculateWindowPosition(out MyLine testLine, out GuidelineIntersectionData guidelineIntersectionData);
+			AnimateFrom(Left, Top);
+		}
+
+		/// <summary>
+		/// Animates the window from the specified position to the position specified by windowLeft and windowTop.
+		/// </summary>
+		private void AnimateFrom(double left, double top)
+		{
+			originalLeft = left;
+			originalTop = top;
+			deltaLeft = windowLeft - originalLeft;
+			deltaTop = windowTop - originalTop;
+			animating = true;
+			animationStartTime = DateTime.Now;
+			if (calloutAnimationTimer == null)
+				calloutAnimationTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(10), DispatcherPriority.Input, MoveTheCallout, Dispatcher);
+			calloutAnimationTimer.Start();
 		}
 	}
 }
