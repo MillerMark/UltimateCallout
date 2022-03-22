@@ -972,7 +972,7 @@ namespace UltimateCallout
 			targetParentWindow.Deactivated -= TargetParentWindow_Deactivated;
 		}
 
-		public static FrmUltimateCallout ShowCallout(string markDownText, FrameworkElement target, double angle, double width, Theme theme)
+		public static FrmUltimateCallout ShowCallout(string markDownText, FrameworkElement target, double width = 200, double angle = 45, Theme theme = Theme.Light)
 		{
 			FrmUltimateCallout frmUltimateCallout = new FrmUltimateCallout();
 			frmUltimateCallout.Options.InitialAngle = angle;
