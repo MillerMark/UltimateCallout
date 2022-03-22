@@ -1254,5 +1254,15 @@ namespace UltimateCallout
 				calloutAnimationTimer = new DispatcherTimer(TimeSpan.FromMilliseconds(10), DispatcherPriority.Input, MoveTheCallout, Dispatcher);
 			calloutAnimationTimer.Start();
 		}
+
+		public void UpdateTarget()
+		{
+			Point newTargetCenter = target.PointToScreen(new Point(target.Width / 2, target.Height / 2));
+			double deltaX = newTargetCenter.X - targetCenter.X;
+			double deltaY = newTargetCenter.Y - targetCenter.Y;
+			Left += deltaX;
+			Top += deltaY;
+			targetCenter = newTargetCenter;
+		}
 	}
 }

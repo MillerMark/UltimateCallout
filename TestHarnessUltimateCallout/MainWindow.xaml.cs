@@ -94,7 +94,7 @@ namespace TestHarnessUltimateCallout
 				Title = $"Angle: {sldAngle.Value}°, Width: {sldWidth.Value}";
 		}
 
-		private void sldWidth_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+		private void SliderValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
 		{
 			CreateCallout();
 		}
@@ -221,6 +221,21 @@ namespace TestHarnessUltimateCallout
 			}
 		}
 
+		void UpdateTargetPosition()
+		{
+			if (sldTargetHeight == null || sldTargetWidth == null || rctTarget == null)
+				return;
+			rctTarget.Height = sldTargetHeight.Value;
+			rctTarget.Width = sldTargetWidth.Value;
+			Canvas.SetLeft(rctTarget, 340 + sldTargetX.Value);
+			Canvas.SetTop(rctTarget, 120 + sldTargetY.Value);
+			if (frmUltimateCallout != null)
+				frmUltimateCallout.UpdateTarget();
+		}
 
+		private void TargetSliderChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+		{
+			UpdateTargetPosition();
+		}
 	}
 }
