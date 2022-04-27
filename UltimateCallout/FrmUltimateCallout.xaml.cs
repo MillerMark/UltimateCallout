@@ -1,6 +1,4 @@
-﻿using Markdig;
-using Markdig.Wpf;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IO;
@@ -257,9 +255,7 @@ namespace UltimateCallout
 
 		void SetMarkDown(Control markdownControl, string markDownText)
 		{
-			if (markdownControl is MarkdownViewer markdownViewer)
-				markdownViewer.Markdown = markDownText;
-			else if (markdownControl is SimpleMarkdownViewer simpleMarkdownViewer)
+			if (markdownControl is SimpleMarkdownViewer simpleMarkdownViewer)
 				simpleMarkdownViewer.Markdown = markDownText;
 			else
 				throw new Exception($"Unknown control type.");
@@ -1254,15 +1250,13 @@ namespace UltimateCallout
 
 		FlowDocument? GetDocument(Control? control)
 		{
-			if (control is MarkdownViewer markdownViewer)
-				return markdownViewer.Document;
-
 			if (control is SimpleMarkdownViewer simpleMarkdownViewer)
 				return simpleMarkdownViewer.Document;
 
 			return null;
 
 		}
+
 		private void MarkdownViewer_Loaded(object sender, RoutedEventArgs e)
 		{
 			Control? markdownControl = sender as Control;

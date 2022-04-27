@@ -1,5 +1,4 @@
-﻿using Markdig.Wpf;
-using System;
+﻿using System;
 using System.Linq;
 using System.Reflection.Metadata;
 using System.Windows;
@@ -54,7 +53,7 @@ namespace UltimateCallout
 			while (cleanParagraphText.Length > 0 && cleanParagraphText[0] == '#')
 			{
 				headingStyle++;
-				cleanParagraphText = cleanParagraphText.Substring(1);
+				cleanParagraphText = cleanParagraphText.Substring(1).Trim();
 			}
 			if (headingStyle == 0)
 				return;
