@@ -249,17 +249,27 @@ namespace UltimateCallout
 			cvsCallout.Children.Add(markdownViewer);
 		}
 
-		private void UnloadMarkdownViewer(MarkdownViewer markdownViewer)
+		private void UnloadMarkdownViewer(Control markdownControl)
 		{
-			if (markdownViewer != null)
-				markdownViewer.Loaded -= MarkdownViewer_Loaded;
+			if (markdownControl != null)
+				markdownControl.Loaded -= MarkdownViewer_Loaded;
 		}
-			
-		private MarkdownViewer LoadMarkdownViewer()
+
+		void SetMarkDown(Control markdownControl, string markDownText)
 		{
-			markdownViewer = new MarkdownViewer();
+			if (markdownControl is MarkdownViewer markdownViewer)
+				markdownViewer.Markdown = markDownText;
+			else if (markdownControl is SimpleMarkdownViewer simpleMarkdownViewer)
+				simpleMarkdownViewer.Markdown = markDownText;
+			else
+				throw new Exception($"Unknown control type.");
+		}
+
+		private Control LoadMarkdownViewer()
+		{
+			CreateMarkdownViewer();
 			LoadStyles(markdownViewer);
-			markdownViewer.Markdown = markDownText;
+			SetMarkDown(markdownViewer, markDownText);
 			markdownViewer.Padding = new Thickness(0);
 			markdownViewer.Margin = new Thickness(0);
 			markdownViewer.IsHitTestVisible = false;
@@ -298,15 +308,15 @@ namespace UltimateCallout
 			}
 		}
 
-		double GetHeight(MarkdownViewer markdownViewer)
+		double GetHeight(FlowDocument flowDocument)
 		{
 			if (markdownViewer == null)
 				return 0d;
 
 			double lowestBlockSoFar = 0;
 
-			if (markdownViewer.Document != null)
-				foreach (var b in markdownViewer.Document.Blocks)
+			if (flowDocument != null)
+				foreach (var b in flowDocument.Blocks)
 				{
 					//Rect startCharacterRect = b.ElementStart.GetCharacterRect(LogicalDirection.Forward);
 					Rect endCharacterRect = b.ElementEnd.GetCharacterRect(LogicalDirection.Forward);
@@ -337,30 +347,11 @@ namespace UltimateCallout
 			AddDiagnostic(blockRect);
 		}
 
-		private void MarkdownViewer_Loaded(object sender, RoutedEventArgs e)
-		{
-			
-			MarkdownViewer? markdownViewer = sender as MarkdownViewer;
-			if (markdownViewer != null)
-			{
-				ReserveSpaceForCloseButton(markdownViewer);
-				if ((string)markdownViewer.Tag == STR_TempMarkdown)
-				{
-					calculatedHeight = GetHeight(markdownViewer);
-					ResumeCalloutConstruction();
-				}
-			}
-		}
-
 		/// <summary>
 		/// Adds a figure to the layout to reserve space for the close button so words don't wrap behind it.
 		/// </summary>
-		private static void ReserveSpaceForCloseButton(MarkdownViewer markdownViewer)
+		private static void ReserveSpaceForCloseButton(FlowDocument? flowDocument)
 		{
-			if (markdownViewer == null)
-				return;
-
-			FlowDocument? flowDocument = markdownViewer.Document;
 			if (flowDocument == null)
 				return;
 
@@ -708,11 +699,7 @@ namespace UltimateCallout
 			if (tanTheta != 0)
 				adjacentC = Math.Abs(oppositeD / tanTheta);
 			else
-			{
-				throw new Exception($"Rory was wrong??? Noooooooo!!!");
-				//System.Diagnostics.Debugger.Break();
-				//adjacentC = calloutWidth / 2 + OutsideMargin;
-			}
+				throw new Exception($"tanTheta was zero. We should never reach this point.");
 
 			return GetCalloutPoint(adjacentC, oppositeD);
 		}
@@ -760,7 +747,7 @@ namespace UltimateCallout
 				adjacentA = Math.Abs(oppositeB / tanTheta);
 			else
 			{
-				throw new Exception($"Rory was wrong??? Noooooooo!!!");
+				throw new Exception($"tanTheta is zero. Should never reach this point.");
 				//System.Diagnostics.Debugger.Break();
 				//adjacentA = target.Width / 2 + Options.TargetSpacing;
 			}
@@ -872,7 +859,7 @@ namespace UltimateCallout
 			ShowTriangleDiagnostics();
 		}
 
-		void LoadStyles(MarkdownViewer markdownViewer)
+		void LoadStyles(Control markdownControl)
 		{
 			ResourceDictionary myResourceDictionary = new ResourceDictionary();
 			string styleName;
@@ -887,7 +874,7 @@ namespace UltimateCallout
 			}
 
 			myResourceDictionary.Source = new Uri($"pack://application:,,,/UltimateCallout;component/Styles/{styleName}.xaml", UriKind.Absolute);
-			markdownViewer.Resources.MergedDictionaries.Add(myResourceDictionary);
+			markdownControl.Resources.MergedDictionaries.Add(myResourceDictionary);
 		}
 
 		Window? targetParentWindow;
@@ -906,7 +893,7 @@ namespace UltimateCallout
 		Point calloutCenter;
 		double lastCalloutAnglePosition;
 		Point closestIntersectingPoint;
-		MarkdownViewer markdownViewer;
+		Control markdownViewer;
 		double calculatedHeight;
 		double targetParentLeft;
 		double targetParentTop;
@@ -1045,7 +1032,7 @@ namespace UltimateCallout
 			double calloutRight = calloutLeft + calloutWidth;
 			double calloutBottom = calloutTop + calloutHeight;
 
-			// TODO: Rory says (UGHHHHH - Mark) we might be doing something similar. Also suggests refactoring earlier code to use this.
+			// TODO: we might have similar code elsewhere.
 
 			MyLine calloutTopLine = MyLine.Horizontal(calloutLeft, calloutRight, calloutTop);
 			MyLine calloutBottomLine = MyLine.Horizontal(calloutLeft, calloutRight, calloutBottom);
@@ -1220,7 +1207,7 @@ namespace UltimateCallout
 			}
 
 			double percentComplete = InOutQuadBlend(timeSpanSinceAnimationStartMs / Options.AnimationTimeMs);
-			
+
 			Left = originalLeft + deltaLeft * percentComplete;
 			Top = originalTop + deltaTop * percentComplete;
 		}
@@ -1263,6 +1250,42 @@ namespace UltimateCallout
 			Left += deltaX;
 			Top += deltaY;
 			targetCenter = newTargetCenter;
+		}
+
+		FlowDocument? GetDocument(Control? control)
+		{
+			if (control is MarkdownViewer markdownViewer)
+				return markdownViewer.Document;
+
+			if (control is SimpleMarkdownViewer simpleMarkdownViewer)
+				return simpleMarkdownViewer.Document;
+
+			return null;
+
+		}
+		private void MarkdownViewer_Loaded(object sender, RoutedEventArgs e)
+		{
+			Control? markdownControl = sender as Control;
+			if (markdownControl == null)
+				return;
+
+			FlowDocument? flowDocument = GetDocument(markdownControl);
+
+			if (flowDocument != null)
+			{
+				ReserveSpaceForCloseButton(flowDocument);
+				if ((string)markdownControl.Tag == STR_TempMarkdown)
+				{
+					calculatedHeight = GetHeight(flowDocument);
+					ResumeCalloutConstruction();
+				}
+			}
+		}
+
+		private void CreateMarkdownViewer()
+		{
+			//markdownViewer = new MarkdownViewer();
+			markdownViewer = new SimpleMarkdownViewer();
 		}
 	}
 }
