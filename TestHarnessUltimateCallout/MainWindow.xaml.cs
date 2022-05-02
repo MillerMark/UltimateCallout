@@ -61,7 +61,7 @@ namespace TestHarnessUltimateCallout
 			}
 			else
 			{
-				frmUltimateCallout = FrmUltimateCallout.ShowCallout(tbxContent.Text, rctTarget, sldWidth.Value, sldAngle.Value, GetTheme());
+				frmUltimateCallout = FrmUltimateCallout.ShowCallout(tbxContent.Text, rctTarget, sldWidth.Value, sldAngle.Value, GetTheme(), 12 * sldZoom.Value);
 				frmUltimateCallout.Closing += FrmUltimateCallout_Closing;
 			}
 		}

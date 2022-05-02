@@ -34,6 +34,11 @@
                 <TextBlock Text="Width: " Width="80" Height="Auto" VerticalAlignment="Center" Margin="10, 0, 0, 0"/>
                 <Slider x:Name="sldWidth" Minimum="20" Maximum="1080" Value="200" Width="300" ValueChanged="SliderValueChanged"></Slider>
             </StackPanel>
+            
+            <StackPanel Orientation="Horizontal" Margin="4" >
+                <TextBlock Text="Zoom: " Width="80" Height="Auto" VerticalAlignment="Center" Margin="10, 0, 0, 0"/>
+                <Slider x:Name="sldZoom" Minimum="0.5" Maximum="3" Value="1" Width="300" ValueChanged="SliderValueChanged"></Slider>
+            </StackPanel>
             <TextBox x:Name="tbxContent" Width="300" Height="200" Margin="10, 10, 0, 0" HorizontalAlignment="Left" AcceptsReturn="True" TextWrapping="Wrap" Text="Type your markdown here." TextChanged="tbxContent_TextChanged"/>
             <StackPanel Orientation="Horizontal" Margin="4, 20, 4, 4" >
                 <TextBlock Text="Target X: " Width="120" Height="Auto" VerticalAlignment="Center" Margin="10, 0, 0, 0"/>
