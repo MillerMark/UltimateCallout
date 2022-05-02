@@ -2,24 +2,50 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0-windows</TargetFramework>
-    <Nullable>enable</Nullable>
+    <Nullable>disable</Nullable>
     <UseWPF>true</UseWPF>
   </PropertyGroup>
 
   <ItemGroup>
-    <Page Remove="CalloutMarkdownStyles.xaml" />
-    <Page Remove="Styles\DarkCalloutStyles.xaml" />
-    <Page Remove="Styles\LightCalloutStyles.xaml" />
+    <Compile Remove="Helpers\ColorExt.cs" />
+    <Compile Remove="Helpers\HueSatLight.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Styles\DarkCalloutStyles.xaml">
-      <SubType>Designer</SubType>
+    <Page Remove="CalloutMarkdownStyles.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="C:\Source\CodeRush\Foundation\Platform\DevExpress.CodeRush.Wpf\ColorExt.cs" Link="Helpers\ColorExt.cs" />
+    <Compile Include="C:\Source\CodeRush\Foundation\Platform\DevExpress.CodeRush.Wpf\HueSatLight.cs" Link="Helpers\HueSatLight.cs" />
+    <Compile Include="C:\Source\CodeRush\Plugins\VisualizePlugins\Callouts\UI\CalloutOptions.cs" Link="UI\CalloutOptions.cs" />
+    <Compile Include="C:\Source\CodeRush\Plugins\VisualizePlugins\Callouts\UI\CalloutSide.cs" Link="UI\CalloutSide.cs" />
+    <Compile Include="C:\Source\CodeRush\Plugins\VisualizePlugins\Callouts\UI\FrmUltimateCallout.xaml.cs" Link="UI\FrmUltimateCallout.xaml.cs" />
+    <Compile Include="C:\Source\CodeRush\Plugins\VisualizePlugins\Callouts\UI\GuidelineIntersectionData.cs" Link="UI\GuidelineIntersectionData.cs" />
+    <Compile Include="C:\Source\CodeRush\Plugins\VisualizePlugins\Callouts\UI\MathEx.cs" Link="UI\MathEx.cs" />
+    <Compile Include="C:\Source\CodeRush\Plugins\VisualizePlugins\Callouts\UI\MyLine.cs" Link="UI\MyLine.cs" />
+    <Compile Include="C:\Source\CodeRush\Plugins\VisualizePlugins\Callouts\UI\SimpleMarkdownViewer.cs" Link="UI\SimpleMarkdownViewer.cs" />
+    <Compile Include="C:\Source\CodeRush\Plugins\VisualizePlugins\Callouts\UI\Styles.cs" Link="UI\Styles.cs" />
+    <Compile Include="C:\Source\CodeRush\Plugins\VisualizePlugins\Callouts\UI\Theme.cs" Link="UI\Theme.cs" />
+    <Compile Include="C:\Source\CodeRush\Plugins\VisualizePlugins\Callouts\UI\WindowHelper.cs" Link="UI\WindowHelper.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Helpers\" />
+    <Folder Include="UI\" />
+    <Folder Include="Styles\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Include="C:\Source\CodeRush\Plugins\VisualizePlugins\Callouts\Styles\DarkCalloutStyles.xaml" Link="Styles\DarkCalloutStyles.xaml">
       <Generator>MSBuild:Compile</Generator>
-    </Resource>
-    <Resource Include="Styles\LightCalloutStyles.xaml">
+    </Page>
+    <Page Include="C:\Source\CodeRush\Plugins\VisualizePlugins\Callouts\Styles\LightCalloutStyles.xaml" Link="Styles\LightCalloutStyles.xaml">
       <Generator>MSBuild:Compile</Generator>
-    </Resource>
+    </Page>
+    <Page Include="C:\Source\CodeRush\Plugins\VisualizePlugins\Callouts\UI\FrmUltimateCallout.xaml" Link="UI\FrmUltimateCallout.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
 
 </Project>

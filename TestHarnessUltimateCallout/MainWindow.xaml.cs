@@ -1,5 +1,5 @@
 ﻿using System;
-using UltimateCallout;
+using DevExpress.CodeRush.VisualizePlugins.Callouts.UI;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -18,6 +18,7 @@ using System.Globalization;
 
 namespace TestHarnessUltimateCallout
 {
+	
 	/// <summary>
 	/// Interaction logic for MainWindow.xaml
 	/// </summary>
@@ -65,7 +66,7 @@ namespace TestHarnessUltimateCallout
 			}
 		}
 
-		private void FrmUltimateCallout_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
+		private void FrmUltimateCallout_Closing(object sender, System.ComponentModel.CancelEventArgs e)
 		{
 			frmUltimateCallout = null;
 		}
@@ -217,7 +218,6 @@ namespace TestHarnessUltimateCallout
 				glowColor = (Color)ColorConverter.ConvertFromString(colorCode);
 				if (frmUltimateCallout != null)
 					frmUltimateCallout.GlowColor = glowColor;
-
 			}
 		}
 
@@ -230,7 +230,7 @@ namespace TestHarnessUltimateCallout
 			Canvas.SetLeft(rctTarget, 340 + sldTargetX.Value);
 			Canvas.SetTop(rctTarget, 120 + sldTargetY.Value);
 			if (frmUltimateCallout != null)
-				frmUltimateCallout.UpdateTarget();
+				frmUltimateCallout.TargetMoved();
 		}
 
 		private void TargetSliderChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
