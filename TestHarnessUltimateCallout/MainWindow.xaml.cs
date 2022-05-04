@@ -61,7 +61,7 @@ namespace TestHarnessUltimateCallout
 			}
 			else
 			{
-				frmUltimateCallout = FrmUltimateCallout.ShowCallout(tbxContent.Text, rctTarget, sldWidth.Value, sldAngle.Value, GetTheme(), 12 * sldZoom.Value);
+				frmUltimateCallout = FrmUltimateCallout.ShowCallout(tbxContent.Text, rctTarget, sldWidth.Value, sldAngle.Value, GetTheme(), GetFontSize());
 				frmUltimateCallout.Closing += FrmUltimateCallout_Closing;
 			}
 		}
@@ -236,6 +236,19 @@ namespace TestHarnessUltimateCallout
 		private void TargetSliderChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
 		{
 			UpdateTargetPosition();
+		}
+
+		double GetFontSize()
+		{
+			return 12 * sldZoom.Value;
+		}
+
+		private void sldZoom_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+		{
+			if (frmUltimateCallout == null)
+				return;
+			frmUltimateCallout.FontSize = GetFontSize();
+			frmUltimateCallout.RefreshLayout();
 		}
 	}
 }

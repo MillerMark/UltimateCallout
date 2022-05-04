@@ -28,6 +28,7 @@
     <Compile Include="C:\Source\CodeRush\Foundation\Platform\DevExpress.CodeRush.Wpf\HueSatLight.cs" Link="Helpers\HueSatLight.cs" />
     <Compile Include="C:\Source\CodeRush\Plugins\VisualizePlugins\Callouts\UI\CalloutOptions.cs" Link="UI\CalloutOptions.cs" />
     <Compile Include="C:\Source\CodeRush\Plugins\VisualizePlugins\Callouts\UI\CalloutSide.cs" Link="UI\CalloutSide.cs" />
+    <Compile Include="C:\Source\CodeRush\Plugins\VisualizePlugins\Callouts\UI\FrmUltimateCallout.LayoutPositioning.cs" Link="UI\FrmUltimateCallout.LayoutPositioning.cs" />
     <Compile Include="C:\Source\CodeRush\Plugins\VisualizePlugins\Callouts\UI\FrmUltimateCallout.xaml.cs" Link="UI\FrmUltimateCallout.xaml.cs" />
     <Compile Include="C:\Source\CodeRush\Plugins\VisualizePlugins\Callouts\UI\GuidelineIntersectionData.cs" Link="UI\GuidelineIntersectionData.cs" />
     <Compile Include="C:\Source\CodeRush\Plugins\VisualizePlugins\Callouts\UI\MathEx.cs" Link="UI\MathEx.cs" />
