@@ -151,6 +151,9 @@ namespace TestHarnessUltimateCallout
 			rbCyan.Foreground = foregroundColor;
 			rbYellow.Foreground = foregroundColor;
 			rbMagenta.Foreground = foregroundColor;
+			rbPurple.Foreground = foregroundColor;
+			rbRed.Foreground = foregroundColor;
+			rbSkyBlue.Foreground = foregroundColor;
 		}
 
 		void SetTheme()

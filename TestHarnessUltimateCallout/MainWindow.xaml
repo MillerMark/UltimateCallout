@@ -13,10 +13,13 @@
                 <RadioButton x:Name="rbLight" Content="Light" IsChecked="True" Margin="8, 1, 0, 0" Click="ThemeRadioButton_Click"/>
                 <RadioButton x:Name="rbDark" Content="Dark" Margin="8, 1, 0, 0" Click="ThemeRadioButton_Click"/>
                 <StackPanel x:Name="glowColors" Orientation="Horizontal" Margin="20, 0, 0, 0" Visibility="Collapsed">
-                	<TextBlock Text="Glow:" Width="Auto" Height="Auto"/>
+                    <TextBlock Text="Glow:" Width="Auto" Height="Auto"/>
                     <RadioButton x:Name="rbYellow" Content="Yellow" Tag="#FFFF00" Margin="10, 1, 0, 0" Click="GlowColorChanged"/>
                     <RadioButton x:Name="rbCyan" Content="Cyan" Tag="#00FFFF"  Margin="10, 1, 0, 0" Click="GlowColorChanged"/>
                     <RadioButton x:Name="rbMagenta" Content="Magenta" Tag="#FF00FF" Margin="10, 1, 0, 0" Click="GlowColorChanged"/>
+                    <RadioButton x:Name="rbPurple" Content="Purple" Tag="#5239ff" Margin="10, 1, 0, 0" Click="GlowColorChanged"/>
+                    <RadioButton x:Name="rbRed" Content="Red" Tag="#861a2b" Margin="10, 1, 0, 0" Click="GlowColorChanged"/>
+                    <RadioButton x:Name="rbSkyBlue" IsChecked="True" Content="Sky Blue" Tag="#18b1fc" Margin="10, 1, 0, 0" Click="GlowColorChanged"/>
                 </StackPanel>
             </StackPanel>
             <StackPanel Orientation="Horizontal" Margin="4" >
@@ -24,17 +27,17 @@
                     Diagnostics
                 </CheckBox>
             </StackPanel>
-            
+
             <StackPanel Orientation="Horizontal" Margin="4">
                 <TextBlock Text="Angle: " Width="80" Height="Auto" VerticalAlignment="Center" Margin="10, 0, 0, 0"/>
                 <Slider x:Name="sldAngle" Minimum="0" Value="45" Maximum="360" Width="300" ValueChanged="sldAngle_ValueChanged" Margin="0, 10, 0, 0"></Slider>
             </StackPanel>
-            
+
             <StackPanel Orientation="Horizontal" Margin="4" >
                 <TextBlock Text="Width: " Width="80" Height="Auto" VerticalAlignment="Center" Margin="10, 0, 0, 0"/>
                 <Slider x:Name="sldWidth" Minimum="20" Maximum="1080" Value="200" Width="300" ValueChanged="SliderValueChanged"></Slider>
             </StackPanel>
-            
+
             <StackPanel Orientation="Horizontal" Margin="4" >
                 <TextBlock Text="Zoom: " Width="80" Height="Auto" VerticalAlignment="Center" Margin="10, 0, 0, 0"/>
                 <Slider x:Name="sldZoom" Minimum="0.5" Maximum="3" Value="1" Width="300" ValueChanged="sldZoom_ValueChanged"></Slider>
@@ -65,6 +68,6 @@
                 </Button>
             </StackPanel>
         </StackPanel>
-        <Rectangle x:Name="rctTarget" Width="120" Height="40" Canvas.Left="340" Canvas.Top="120" Fill="Pink" ></Rectangle>
+        <Rectangle x:Name="rctTarget" Width="120" Height="40" Canvas.Left="340" Canvas.Top="164" Fill="Pink" HorizontalAlignment="Center" VerticalAlignment="Top" ></Rectangle>
     </Canvas>
 </Window>
